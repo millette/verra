@@ -1,0 +1,43 @@
+{
+  "name": "verra",
+  "version": "0.0.0",
+  "description": "File.army client.",
+  "license": "AGPL-3.0",
+  "repository": "millette/verra",
+  "author": {
+    "name": "Robin Millette",
+    "email": "robin@millette.info",
+    "url": "http://robin.millette.info"
+  },
+  "bin": "cli.js",
+  "engines": {
+    "node": ">=6"
+  },
+  "scripts": {
+    "lint": "standard",
+    "test": "standard && nyc ava",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "files": [
+    "index.js",
+    "cli.js"
+  ],
+  "keywords": [
+    "cli-app",
+    "cli"
+  ],
+  "dependencies": {
+    "meow": "^3.7.0",
+    "update-notifier": "^2.1.0"
+  },
+  "devDependencies": {
+    "ava": "^0.18.2",
+    "babel-eslint": "^7.1.1",
+    "coveralls": "^2.12.0",
+    "nyc": "^10.1.2",
+    "standard": "^9.0.0"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  }
+}

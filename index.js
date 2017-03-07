@@ -22,9 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict'
 
+// core
+const url = require('url')
+
 // npm
 const got = require('got')
 const cookie = require('cookie')
+const FormData = require('form-data')
 
 const headers = { cookie: cookie.serialize('PHPSESSID', process.env.FILEARMY_TOKEN) }
 const re1 = /PF\.obj\.config\.auth_token(.+);/
@@ -44,7 +48,7 @@ const getUser = (str) => JSON.parse(chop0(str.match(re4)))
 const getCats = (str) => {
   const ret = []
   let x
-  while (x = re6.exec(str)) { ret.push({ id: parseInt(x[1], 10), path: x[2], text: x[3] }) }
+  while ((x = re6.exec(str))) { ret.push({ id: parseInt(x[1], 10), path: x[2], text: x[3] }) }
   return ret
 }
 
@@ -62,7 +66,7 @@ const parse = (res) => {
 
 const newImageUrl = (u, categoryId, token) => {
   const body = new FormData()
-  //body.append('source', 'https://farm3.staticflickr.com/2142/1560733044_5aea80c08a_o_d.jpg')
+  // body.append('source', 'https://farm3.staticflickr.com/2142/1560733044_5aea80c08a_o_d.jpg')
   // body.append('source', 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Poussin,_Nicolas_-_The_Nurture_of_Jupiter_-_Google_Art_Project.jpg')
   body.append('source', u)
   body.append('type', 'url')
@@ -74,12 +78,42 @@ const newImageUrl = (u, categoryId, token) => {
   body.append('auth_token', token)
 
   // body.append('category_id', '26')
-  body.append('category_id', new String(categoryId))
+  body.append('category_id', String(categoryId))
   body.append('nsfw', '0')
 
   // optionnal?
   // body.append('video_path', 'null')
 }
+
+const XX = (body) => new Promise((resolve, reject) => {
+  // const headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', 'hm0pp24l27oeq9sjcr947uf6e1') }
+
+/*
+  const u = {
+    protocol: 'https:',
+    host: 'file.army',
+    path: '/json',
+    headers
+  }
+*/
+  const u = url.parse('https://file.army/json')
+  u.headers = headers
+
+  body.submit(u, (e, res) => {
+    if (e) { return reject(e) }
+    let t = ''
+    console.log('e:', e)
+    console.log('a:', res.headers)
+    res.on('data', (g) => {
+      console.log('g:', g)
+      t += g
+    })
+    res.on('end', () => {
+      console.log('t:', t)
+      resolve({ body: t, headers: res.headers })
+    })
+  })
+})
 
 // const newImageUpload = () => {}
 

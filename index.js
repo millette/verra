@@ -30,7 +30,6 @@ const got = require('got')
 const cookie = require('cookie')
 const FormData = require('form-data')
 
-const headers = { cookie: cookie.serialize('PHPSESSID', process.env.FILEARMY_TOKEN) }
 const re1 = /PF\.obj\.config\.auth_token(.+);/
 const re2 = /PF\.obj\.config\.json_api(.+);/
 const re3 = /\bmax_filesize(.+),/
@@ -43,7 +42,10 @@ const chop1 = (str) => str.trim().slice(1, -1)
 const chop = (ar) => chop1(chop0(ar))
 const chop2 = (ar) => chop1(chop5(':', ar))
 const chop9 = (ar) => chop2(ar).split(',').map((x) => x.trim().slice(1, -1))
-const getUser = (str) => JSON.parse(chop0(str.match(re4)))
+const getUser = (str) => {
+  const a = str.match(re4)
+  return a ? JSON.parse(chop0(a)) : false
+}
 
 const getCats = (str) => {
   const ret = []
@@ -55,69 +57,118 @@ const getCats = (str) => {
 const parse = (res) => {
   const body = res.body
   const headers = res.headers
-  const authToken = chop(body.match(re1))
-  const jsonApi = chop(body.match(re2))
+  const token = chop(body.match(re1))
+  const root = chop(body.match(re2))
   const maxFilesize = chop2(body.match(re3))
   const imageTypes = chop9(body.match(re5))
-  const loggedUser = getUser(body)
+  const user = getUser(body)
   const cats = getCats(body)
-  return { headers, authToken, jsonApi, maxFilesize, imageTypes, loggedUser, cats }
+  return { headers, token, root, maxFilesize, imageTypes, user, cats }
 }
 
-const newImageUrl = (u, categoryId, token) => {
+const newImageUrl = (options) => {
   const body = new FormData()
-  // body.append('source', 'https://farm3.staticflickr.com/2142/1560733044_5aea80c08a_o_d.jpg')
-  // body.append('source', 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Poussin,_Nicolas_-_The_Nurture_of_Jupiter_-_Google_Art_Project.jpg')
-  body.append('source', u)
+  body.append('source', options.url)
   body.append('type', 'url')
   body.append('action', 'upload')
   body.append('privacy', 'public')
   body.append('timestamp', Date.now())
-  // body.append('auth_token', 'c25d20eb83c650af49c556ebf87cf5fa9df59e98')
-  // body.append('auth_token', '8c554edfce55ea5a3407997bd9dcd0344f01b26c')
-  body.append('auth_token', token)
-
-  // body.append('category_id', '26')
-  body.append('category_id', String(categoryId))
+  body.append('auth_token', options.token)
+  if (options.category) { body.append('category_id', String(options.category)) }
   body.append('nsfw', '0')
-
-  // optionnal?
-  // body.append('video_path', 'null')
+  return body
 }
 
-const XX = (body) => new Promise((resolve, reject) => {
-  // const headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', 'hm0pp24l27oeq9sjcr947uf6e1') }
+const XX = (options) => new Promise((resolve, reject) => {
+  const u = url.parse(options.root)
+  u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', options.sessionCookie) }
 
-/*
-  const u = {
-    protocol: 'https:',
-    host: 'file.army',
-    path: '/json',
-    headers
-  }
-*/
-  const u = url.parse('https://file.army/json')
-  u.headers = headers
-
-  body.submit(u, (e, res) => {
+  options.body.submit(u, (e, res) => {
     if (e) { return reject(e) }
-    let t = ''
-    console.log('e:', e)
-    console.log('a:', res.headers)
-    res.on('data', (g) => {
-      console.log('g:', g)
-      t += g
-    })
+    let body = ''
+    res.on('data', (g) => { body += g })
     res.on('end', () => {
-      console.log('t:', t)
-      resolve({ body: t, headers: res.headers })
+      try {
+        body = JSON.parse(body)
+        resolve({ body, headers: res.headers })
+      } catch (e) {
+        reject(e)
+      }
     })
+    res.on('error', (e) => reject(e))
   })
 })
 
 // const newImageUpload = () => {}
 
+/*
 exports.getToken = () => got('https://file.army/page/contact', { headers }).then(parse)
 exports.parse = parse
 exports.newImageUrl = newImageUrl
 // exports.newImageUpload = newImageUpload
+*/
+
+module.exports = class {
+  constructor (sessionCookie) {
+    this.sessionCookie = sessionCookie || process.env.FILEARMY_TOKEN
+    this.token = ''
+    this.root = 'https://file.army'
+    this.updatedAt = Date.now()
+    this.headers = {}
+    this.maxFilesize = ''
+    this.imageTypes = []
+    this.user = false
+    this.cats = []
+    this.defaultCategory = false
+    this.error = false
+  }
+
+  get elapsed () { return Date.now() - this.updatedAt }
+
+  category (id) {
+    this.defaultCategory = parseInt(id, 10)
+    return this
+  }
+
+  init (sessionCookie) {
+    if (!sessionCookie && this.token) { return this }
+    if (!sessionCookie && !this.sessionCookie) { return this }
+    if (sessionCookie) { this.sessionCookie = sessionCookie }
+    const u = url.parse(this.root)
+    u.path = '/page/contact'
+    return got(u, { headers: { cookie: cookie.serialize('PHPSESSID', this.sessionCookie) } })
+      .then(parse)
+      .then((x) => {
+        Object.assign(this, x)
+        this.error = false
+        if (this.user) {
+          this.updatedAt = Date.now()
+          return this
+        }
+        this.sessionCookie = false
+        return this
+      })
+      .catch((e) => {
+        this.error = e
+        return this
+      })
+  }
+
+  byUrl (options) {
+    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    const to = typeof options
+    if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
+    if (to === 'string') { options = { url: options } }
+    if (!options.url) { return Promise.reject(new Error('Missing url.')) }
+    if (!options.category) { options.category = this.defaultCategory }
+    if (options.token) {
+      this.token = options.token
+    } else {
+      options.token = this.token
+    }
+    options.root = this.root
+    options.sessionCookie = this.sessionCookie
+    options.body = newImageUrl(options)
+    return XX(options)
+  }
+}

@@ -19,6 +19,20 @@ The path is available in notifier.config.path.
 Users can also opt-out by setting the environment variable NO_UPDATE_NOTIFIER
 with any value or by using the --no-update-notifier flag on a per run basis.
 
+## Login
+You must login manually thru the website.
+
+### Bookmarklet
+```
+javascript:void(function(){$('a').each((x,y)=>{if(y.href.indexOf('logout')!==-1){alert(`auth_token:%20${y.search.split('=').slice(1).join('=')}\nPHPSESSID:%20${document.cookie.split(';').filter((z)=>z.split('=')[0]==='PHPSESSID').map((z)=>z.split('=').slice(1).join('='))[0]}`)}})}())
+```
+
+```
+javascript:void(function(){alert(document.cookie.split(';').filter((z)=>z.split('=')[0]==='PHPSESSID').map((z)=>z.split('=').slice(1).join('='))[0])}())
+```
+
+Once logged in, run the bookmarklet to obtain your credentials.
+
 ## Usage
 ```js
 const verra = require('verra')

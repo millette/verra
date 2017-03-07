@@ -23,6 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 'use strict'
+
+require('dotenv-safe').load()
+
 const meow = require('meow')
 const updateNotifier = require('update-notifier')
 const verra = require('./')

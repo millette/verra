@@ -1,7 +1,7 @@
 /*
 File.army client.
 
-Copyright 2016
+Copyright 2017
 Robin Millette <mailto:robin@millette.info>
 <http://robin.millette.info>
 
@@ -62,10 +62,11 @@ const parse = (res) => {
   const maxFilesize = chop2(body.match(re3))
   const imageTypes = chop9(body.match(re5))
   const user = getUser(body)
-  const cats = getCats(body)
-  return { headers, token, root, maxFilesize, imageTypes, user, cats }
+  const categories = getCats(body)
+  return { headers, token, root, maxFilesize, imageTypes, user, categories }
 }
 
+/*
 const newImageUrl = (options) => {
   const body = new FormData()
   body.append('source', options.url)
@@ -78,7 +79,9 @@ const newImageUrl = (options) => {
   body.append('nsfw', '0')
   return body
 }
+*/
 
+/*
 const XX = (options) => new Promise((resolve, reject) => {
   const u = url.parse(options.root)
   u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', options.sessionCookie) }
@@ -86,7 +89,10 @@ const XX = (options) => new Promise((resolve, reject) => {
   options.body.submit(u, (e, res) => {
     if (e) { return reject(e) }
     let body = ''
-    res.on('data', (g) => { body += g })
+    res.on('data', (g) => {
+      console.log('typeof g:', typeof g)
+      body += g
+    })
     res.on('end', () => {
       try {
         body = JSON.parse(body)
@@ -98,35 +104,100 @@ const XX = (options) => new Promise((resolve, reject) => {
     res.on('error', (e) => reject(e))
   })
 })
+*/
 
 // const newImageUpload = () => {}
-
-/*
-exports.getToken = () => got('https://file.army/page/contact', { headers }).then(parse)
-exports.parse = parse
-exports.newImageUrl = newImageUrl
-// exports.newImageUpload = newImageUpload
-*/
 
 module.exports = class {
   constructor (sessionCookie) {
     this.sessionCookie = sessionCookie || process.env.FILEARMY_TOKEN
     this.token = ''
     this.root = 'https://file.army'
-    this.updatedAt = Date.now()
+    this.createdAt = this.updatedAt = Date.now()
     this.headers = {}
     this.maxFilesize = ''
     this.imageTypes = []
     this.user = false
-    this.cats = []
+    this.categories = []
     this.defaultCategory = false
     this.error = false
+  }
+
+  newImageUrl (options) {
+    options.body = new FormData()
+    options.body.append('source', options.url)
+    options.body.append('type', 'url')
+    options.body.append('action', 'upload')
+    options.body.append('privacy', 'public')
+    options.body.append('timestamp', Date.now())
+    options.body.append('auth_token', this.token)
+    options.body.append('nsfw', '0')
+    if (options.category) { options.body.append('category_id', String(options.category)) }
+    return options
+  }
+
+  XX (options) {
+    const u = url.parse(this.root)
+    u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
+/*
+    const submit = pify(options.body.submit)
+    return submit(u)
+      .then((res) => {
+        let body = ''
+        res.on('data', (g) => {
+          console.log('typeof g:', typeof g)
+          body += g
+        })
+        res.on('end', () => {
+          try {
+            return { body: JSON.parse(body), headers: res.headers }
+          } catch (e) {
+            return Promise.reject(e)
+          }
+        })
+        res.on('error', Promise.reject)
+      })
+*/
+    return new Promise((resolve, reject) => {
+      const u = url.parse(this.root)
+      u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
+
+      options.body.submit(u, (e, res) => {
+        if (e) { return reject(e) }
+        let body = ''
+        res.on('data', (g) => {
+          console.log('typeof g:', typeof g)
+          body += g
+        })
+        res.on('end', () => {
+          try {
+            body = JSON.parse(body)
+            resolve({ body, headers: res.headers })
+          } catch (e) {
+            reject(e)
+          }
+        })
+        res.on('error', (e) => reject(e))
+      })
+    })
+  }
+
+  validCategory (category) {
+    let found = false
+    if (typeof category === 'string') { found = this.categories.find((x) => category === x.path) }
+    if (typeof category === 'number') { found = this.categories.find((x) => return category === x.id) }
+    return (found && found.id) || false
   }
 
   get elapsed () { return Date.now() - this.updatedAt }
 
   category (id) {
-    this.defaultCategory = parseInt(id, 10)
+    if (!id) {
+      this.defaultCategory = false
+      return this
+    }
+    const cat = this.validCategory(id)
+    if (cat) { this.defaultCategory = cat }
     return this
   }
 
@@ -135,6 +206,7 @@ module.exports = class {
     if (!sessionCookie && !this.sessionCookie) { return this }
     if (sessionCookie) { this.sessionCookie = sessionCookie }
     const u = url.parse(this.root)
+    // almost any page would do, but this is a short one
     u.path = '/page/contact'
     return got(u, { headers: { cookie: cookie.serialize('PHPSESSID', this.sessionCookie) } })
       .then(parse)
@@ -160,15 +232,21 @@ module.exports = class {
     if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
     if (to === 'string') { options = { url: options } }
     if (!options.url) { return Promise.reject(new Error('Missing url.')) }
-    if (!options.category) { options.category = this.defaultCategory }
-    if (options.token) {
-      this.token = options.token
-    } else {
-      options.token = this.token
-    }
-    options.root = this.root
-    options.sessionCookie = this.sessionCookie
-    options.body = newImageUrl(options)
-    return XX(options)
+    options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
+    // if (options.token) { this.token = options.token }
+    if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
+    this.newImageUrl(options)
+    console.log('options:', options)
+    return this.XX(options)
+  }
+
+  byFile (options) {
+    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    return Promise.reject(new Error('Not implemented yet.'))
+  }
+
+  edit (options) {
+    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    return Promise.reject(new Error('Not implemented yet.'))
   }
 }

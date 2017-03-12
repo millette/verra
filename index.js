@@ -185,7 +185,7 @@ module.exports = class {
   validCategory (category) {
     let found = false
     if (typeof category === 'string') { found = this.categories.find((x) => category === x.path) }
-    if (typeof category === 'number') { found = this.categories.find((x) => return category === x.id) }
+    if (typeof category === 'number') { found = this.categories.find((x) => category === x.id) }
     return (found && found.id) || false
   }
 

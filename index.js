@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // core
 const url = require('url')
+const fs = require('fs')
 
 // npm
 const got = require('got')
@@ -66,48 +67,6 @@ const parse = (res) => {
   return { headers, token, root, maxFilesize, imageTypes, user, categories }
 }
 
-/*
-const newImageUrl = (options) => {
-  const body = new FormData()
-  body.append('source', options.url)
-  body.append('type', 'url')
-  body.append('action', 'upload')
-  body.append('privacy', 'public')
-  body.append('timestamp', Date.now())
-  body.append('auth_token', options.token)
-  if (options.category) { body.append('category_id', String(options.category)) }
-  body.append('nsfw', '0')
-  return body
-}
-*/
-
-/*
-const XX = (options) => new Promise((resolve, reject) => {
-  const u = url.parse(options.root)
-  u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', options.sessionCookie) }
-
-  options.body.submit(u, (e, res) => {
-    if (e) { return reject(e) }
-    let body = ''
-    res.on('data', (g) => {
-      console.log('typeof g:', typeof g)
-      body += g
-    })
-    res.on('end', () => {
-      try {
-        body = JSON.parse(body)
-        resolve({ body, headers: res.headers })
-      } catch (e) {
-        reject(e)
-      }
-    })
-    res.on('error', (e) => reject(e))
-  })
-})
-*/
-
-// const newImageUpload = () => {}
-
 module.exports = class {
   constructor (sessionCookie) {
     this.sessionCookie = sessionCookie || process.env.FILEARMY_TOKEN
@@ -127,6 +86,21 @@ module.exports = class {
     options.body = new FormData()
     options.body.append('source', options.url)
     options.body.append('type', 'url')
+    options.body.append('action', 'upload')
+    options.body.append('privacy', 'public')
+    options.body.append('timestamp', Date.now())
+    options.body.append('auth_token', this.token)
+    options.body.append('nsfw', '0')
+    if (options.category) { options.body.append('category_id', String(options.category)) }
+    return options
+  }
+
+  newImageUpload (options) {
+    options.body = new FormData()
+    // add actual file content
+    // form.append('my_file', fs.createReadStream(options.source))
+    options.body.append('source', fs.createReadStream(options.source))
+    options.body.append('type', 'file')
     options.body.append('action', 'upload')
     options.body.append('privacy', 'public')
     options.body.append('timestamp', Date.now())
@@ -242,7 +216,16 @@ module.exports = class {
 
   byFile (options) {
     if (!this.user) { return Promise.reject(new Error('Not connected.')) }
-    return Promise.reject(new Error('Not implemented yet.'))
+    const to = typeof options
+    // return Promise.reject(new Error('Not implemented yet.'))
+    if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
+    if (to === 'string') { options = { source: options } }
+    if (!options.source) { return Promise.reject(new Error('Missing source file name.')) }
+    options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
+    if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
+    this.newImageUpload(options)
+    console.log('options:', options)
+    return this.XX(options)
   }
 
   edit (options) {

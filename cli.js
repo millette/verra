@@ -54,7 +54,7 @@ verra.init()
   .then((x) => {
     console.log(`${x.categories.length} categories:`)
     x.categories.forEach((y) => {
-      console.log(`${y.text} (${y.id}) at https://file.army/category/${y.path}`)
+      // console.log(`${y.text} (${y.id}) at https://file.army/category/${y.path}`)
     })
   })
   .catch(console.error)

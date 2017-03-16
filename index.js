@@ -165,6 +165,12 @@ module.exports = class {
     if (!sessionCookie && !this.sessionCookie) { return this }
     if (sessionCookie) { this.sessionCookie = sessionCookie }
     const u = url.parse(this.root)
+
+    if (process.env.CATEGORY) {
+      const catId = parseInt(process.env.CATEGORY, 10)
+      if (catId == process.env.CATEGORY) { this.category(catId) }
+    }
+
     // almost any page would do, but this is a short one
     u.path = '/page/contact'
     return got(u, { headers: { cookie: cookie.serialize('PHPSESSID', this.sessionCookie) } })
@@ -202,7 +208,6 @@ module.exports = class {
   byFile (options) {
     if (!this.user) { return Promise.reject(new Error('Not connected.')) }
     const to = typeof options
-    // return Promise.reject(new Error('Not implemented yet.'))
     if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
     if (to === 'string') { options = { source: options } }
     if (!options.source) { return Promise.reject(new Error('Missing source file name.')) }

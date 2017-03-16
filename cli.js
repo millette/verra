@@ -29,10 +29,15 @@ require('dotenv-safe').load()
 const meow = require('meow')
 const updateNotifier = require('update-notifier')
 const chokidar = require('chokidar')
+const mkdirp = require('mkdirp')
+const pify = require('pify')
+const pThrottle = require('p-throttle')
+// const _ = require('lodash')
 
 // core
 const url = require('url')
 const fs = require('fs')
+const path = require('path')
 
 // self
 const Verra = require('./')
@@ -40,28 +45,109 @@ const pkg = require('./package.json')
 
 updateNotifier({ pkg }).notify()
 
-const cli = meow([
-  'Usage',
-  '  $ verra [input]',
-  '',
-  'Options',
-  '  --foo  Lorem ipsum. [Default: false]',
-  '',
-  'Examples',
-  '  $ verra',
-  '  unicorns & rainbows',
-  '  $ verra ponies',
-  '  ponies & rainbows'
-])
+/*
+const cli = meow({}, {
+  boolean: ['noCategory'],
+  default: {
+    'noCategory': true
+  }
+})
+*/
+
+const cli = meow({}, {boolean: true})
 
 const verra = new Verra()
 
-const showCategories = (x) => {
-  console.log('Categories')
-  console.log(`${x.categories.length} categories:`)
+const categoriesCommand = (x) => {
+  const ar = ['Categories']
+  ar.push(`${x.categories.length} categories:`)
   x.categories.forEach((y) => {
-    console.log(`${y.text}${x.defaultCategory === y.id ? ' * ' : ' '}(${y.id}) at https://file.army/category/${y.path}`)
+    ar.push(`${y.text}${x.defaultCategory === y.id ? ' * ' : ' '}(${y.id}) at https://file.army/category/${y.path}`)
   })
+  return ar.join('\n')
+}
+
+const fileCommand = (x) => {
+  if (!cli.input[1]) { return Promise.reject(new Error(`Missing file argument.`)) }
+  if (!fs.existsSync(cli.input[1])) {
+    return Promise.reject(new Error(`File ${cli.input[1]} doesn't exist.`))
+  }
+  return x.byFile(cli.input[1])
+}
+
+const urlCommand = (x) => {
+  if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`)) }
+  const u = url.parse(cli.input[1])
+  if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
+    return Promise.reject(new Error(`${cli.input[1]} doesn't look like a url.`))
+  }
+  return x.byUrl(cli.input[1])
+}
+
+const helpCommand = (x) => `
+${x.version}
+
+Available commands:
+  * This text: help
+  * Name and version: version
+  * List all categories: categories
+  * Upload new image by URL: url <url>
+  * Upload new image by filename: file <filename>
+
+Possible flags:
+  * --category <category|INTEGER|STRING>
+`
+
+const rename = pify(fs.rename)
+const mkdir = pify(mkdirp)
+
+const moveFile = (x, p) => {
+  const newPath = path.resolve(x.doneDir, path.relative(x.watchDir, p))
+  return mkdir(path.parse(newPath).dir)
+    .then(() => rename(p, newPath))
+    .then(() => `Moved ${p} to ${newPath}...`)
+}
+
+const processImp = (x, p) => x.byFile(p)
+  .then((y) => {
+    // console.log('y', y, p)
+    return Promise.all([y, moveFile(x, p)])
+  })
+  .then((y) => {
+    return {
+      upload: y[0],
+      move: y[1]
+    }
+  })
+
+const process = pThrottle(processImp, 1, 100 * 1000)
+
+const watchCommand = (x) => {
+  if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
+  const dir = path.resolve(cli.input[1])
+  if (!fs.existsSync(dir)) {
+    return Promise.reject(new Error(`Directory ${dir} doesn't exist.`))
+  }
+  x.watchDir = dir
+  const now = Date.now()
+  x.doneDir = path.resolve(x.watchDir, '.done')
+  if (!fs.existsSync(x.doneDir)) { mkdirp.sync(x.doneDir) }
+  x.watcher = chokidar.watch(dir, { ignored: x.doneDir })
+  x.watcher.on('all', (ev, p) => {
+    if (ev !== 'change' && ev !== 'add') {
+      console.error(`Ignoring ${ev} on ${p}...`)
+      return
+    }
+    process(x, p)
+      .then((aa) => {
+        console.log('aa', aa)
+      })
+      .catch((e) => {
+        console.log('eeee, oy', e)
+      })
+  })
+
+  return `Watching ${cli.input[1]}...`
 }
 
 verra.init()
@@ -76,54 +162,16 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
     if (x.defaultCategory) {
       console.log(`Default category id: ${x.defaultCategory}`)
     }
-    let method
+
     switch (cli.input[0]) {
-      case 'categories':
-        showCategories(x)
-        break
-
-      case 'url':
-        if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`))}
-        const u = url.parse(cli.input[1])
-        if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
-          return Promise.reject(new Error(`${cli.input[1]} doesn't look like a url.`))
-        }
-        method = 'byUrl'
-        break
-
-      case 'file':
-        if (!cli.input[1]) { return Promise.reject(new Error(`Missing file argument.`)) }
-        if (!fs.existsSync(cli.input[1])) {
-          return Promise.reject(new Error(`File ${cli.input[1]} doesn't exist.`))
-        }
-        method = 'byFile'
-        break
-
-      case 'watch':
-        // XX
-        // chokidar
-        break
-
-      case 'version':
-        console.log(x.version)
-        break
-
+      case 'categories': return categoriesCommand(x)
+      case 'url': return urlCommand(x)
+      case 'file': return fileCommand(x)
+      case 'watch': return watchCommand(x)
+      case 'version': return x.version
       case 'help':
-      default:
-        console.log(`
-Available commands:
-  * help (this text)
-  * version
-  * categories
-  * url <url>
-  * file <filename>
-
-Possible flags:
-  * --category <category|INTEGER|STRING>
-`)
+      default: return helpCommand(x)
     }
-    if (method) { return x[method](cli.input[1]) }
-    return 'Have a nice day.'
   })
   .then(console.log)
   .catch(console.error)

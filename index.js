@@ -121,10 +121,14 @@ module.exports = class {
     return options
   }
 
+  get version () {
+    return `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`
+  }
+
   doit (options) {
     const u = url.parse(this.root)
     u.headers = {
-      'user-agent': `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`,
+      'user-agent': this.version,
       accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
     }
 

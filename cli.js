@@ -31,8 +31,8 @@ const updateNotifier = require('update-notifier')
 const chokidar = require('chokidar')
 const mkdirp = require('mkdirp')
 const pify = require('pify')
+const delay = require('delay')
 const pThrottle = require('p-throttle')
-// const _ = require('lodash')
 
 // core
 const url = require('url')
@@ -45,18 +45,14 @@ const pkg = require('./package.json')
 
 updateNotifier({ pkg }).notify()
 
-/*
 const cli = meow({}, {
-  boolean: ['noCategory'],
-  default: {
-    'noCategory': true
-  }
+  boolean: true,
+  default: { wait: 5 * 60 }
 })
-*/
-
-const cli = meow({}, {boolean: true})
 
 const verra = new Verra()
+
+const seconds = cli.flags.wait
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']
@@ -93,9 +89,11 @@ Available commands:
   * List all categories: categories
   * Upload new image by URL: url <url>
   * Upload new image by filename: file <filename>
+  * Watch a directory for new images to upload: watch <dir>
 
 Possible flags:
   * --category <category|INTEGER|STRING>
+  * --wait <seconds|INTEGER> (waits between seconds and 1.5 * seconds)
 `
 
 const rename = pify(fs.rename)
@@ -108,11 +106,9 @@ const moveFile = (x, p) => {
     .then(() => `Moved ${p} to ${newPath}...`)
 }
 
-const processImp = (x, p) => x.byFile(p)
-  .then((y) => {
-    // console.log('y', y, p)
-    return Promise.all([y, moveFile(x, p)])
-  })
+const processImp = (x, p) => delay(Math.random() * seconds / 2 * 1000)
+  .then(() => x.byFile(p))
+  .then((y) => Promise.all([y, moveFile(x, p)]))
   .then((y) => {
     return {
       upload: y[0],
@@ -120,7 +116,7 @@ const processImp = (x, p) => x.byFile(p)
     }
   })
 
-const process = pThrottle(processImp, 1, 100 * 1000)
+const process = pThrottle(processImp, 1, seconds * 1000)
 
 const watchCommand = (x) => {
   if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
@@ -129,25 +125,16 @@ const watchCommand = (x) => {
     return Promise.reject(new Error(`Directory ${dir} doesn't exist.`))
   }
   x.watchDir = dir
-  const now = Date.now()
   x.doneDir = path.resolve(x.watchDir, '.done')
   if (!fs.existsSync(x.doneDir)) { mkdirp.sync(x.doneDir) }
   x.watcher = chokidar.watch(dir, { ignored: x.doneDir })
   x.watcher.on('all', (ev, p) => {
-    if (ev !== 'change' && ev !== 'add') {
-      console.error(`Ignoring ${ev} on ${p}...`)
-      return
-    }
+    if (ev !== 'change' && ev !== 'add') { return }
     process(x, p)
-      .then((aa) => {
-        console.log('aa', aa)
-      })
-      .catch((e) => {
-        console.log('eeee, oy', e)
-      })
+      .then((aa) => { console.log('processed', aa) })
+      .catch(console.error)
   })
-
-  return `Watching ${cli.input[1]}...`
+  return `Watching ${dir}...`
 }
 
 verra.init()

@@ -80,6 +80,27 @@ const parse = (res) => {
   return { headers, token, root, maxFilesize, imageTypes, user, categories }
 }
 
+
+const formSetup = (type, category, token, source) => {
+  const body = new FormData()
+  body.append('action', 'upload')
+  body.append('privacy', 'public')
+  body.append('timestamp', Date.now())
+  body.append('auth_token', token)
+  body.append('nsfw', '0')
+  if (category) { body.append('category_id', String(category)) }
+  body.append('type', type)
+  if (type === 'url') {
+    body.append('source', source)
+  } else if (type === 'file') {
+    body.append('source', fs.createReadStream(source))
+  }
+  return body
+}
+
+const fileFormSetup = formSetup.bind(null, 'file')
+const urlFormSetup = formSetup.bind(null, 'url')
+
 module.exports = class {
   constructor (sessionCookie) {
     this.sessionCookie = sessionCookie || process.env.FILEARMY_TOKEN
@@ -96,32 +117,18 @@ module.exports = class {
   }
 
   newImageUrl (options) {
-    options.body = new FormData()
-    options.body.append('source', options.url)
-    options.body.append('type', 'url')
-    options.body.append('action', 'upload')
-    options.body.append('privacy', 'public')
-    options.body.append('timestamp', Date.now())
-    options.body.append('auth_token', this.token)
-    options.body.append('nsfw', '0')
-    if (options.category) { options.body.append('category_id', String(options.category)) }
+    options.body = fileFormSetup(options.category, this.token, options.url)
     return options
   }
 
   newImageUpload (options) {
-    options.body = new FormData()
-    options.body.append('source', fs.createReadStream(options.source))
-    options.body.append('type', 'file')
-    options.body.append('action', 'upload')
-    options.body.append('privacy', 'public')
-    options.body.append('timestamp', Date.now())
-    options.body.append('auth_token', this.token)
-    options.body.append('nsfw', '0')
-    if (options.category) { options.body.append('category_id', String(options.category)) }
+    options.body = urlFormSetup(options.category, this.token, options.source)
     return options
   }
 
   get version () { return `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}` }
+  get elapsed () { return Date.now() - this.updatedAt }
+  get connected () { return Boolean(this.user) }
 
   doit (options) {
     const u = url.parse(this.root)
@@ -154,8 +161,6 @@ module.exports = class {
     return (found && found.id) || false
   }
 
-  get elapsed () { return Date.now() - this.updatedAt }
-
   category (id) {
     if (!id || id === true) {
       this.defaultCategory = false
@@ -176,7 +181,7 @@ module.exports = class {
     u.path = '/page/contact'
     return got(u, {
       headers: {
-        'user-agent': `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`,
+        'user-agent': this.version,
         cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
       }
     })
@@ -201,8 +206,6 @@ module.exports = class {
       })
   }
 
-  get connected () { return Boolean(this.user) }
-
   byUrl (options) {
     if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
     const to = typeof options
@@ -210,7 +213,6 @@ module.exports = class {
     if (to === 'string') { options = { url: options } }
     if (!options.url) { return Promise.reject(new Error('Missing url.')) }
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
-    // if (options.token) { this.token = options.token }
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUrl(options)
     console.log('options:', options)
@@ -226,7 +228,6 @@ module.exports = class {
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUpload(options)
-    // console.log('options:', options)
     return this.doit(options)
   }
 

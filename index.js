@@ -48,11 +48,17 @@ const getUser = (str) => {
   return a ? JSON.parse(chop0(a)) : false
 }
 
+const textSortCats = (a, b) => {
+  if (a.text > b.text) { return 1 }
+  if (a.text < b.text) { return -1 }
+  return 0
+}
+
 const getCats = (str) => {
   const ret = []
   let x
   while ((x = re6.exec(str))) { ret.push({ id: parseInt(x[1], 10), path: x[2], text: x[3] }) }
-  return ret
+  return ret.sort(textSortCats)
 }
 
 const parse = (res) => {

@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict'
 
+// self
+const pkg = require('./package.json')
+
 // core
 const url = require('url')
 const fs = require('fs')
@@ -44,8 +47,12 @@ const chop = (ar) => chop1(chop0(ar))
 const chop2 = (ar) => chop1(chop5(':', ar))
 const chop9 = (ar) => chop2(ar).split(',').map((x) => x.trim().slice(1, -1))
 const getUser = (str) => {
-  const a = str.match(re4)
-  return a ? JSON.parse(chop0(a)) : false
+  try {
+    const a = str.match(re4)
+    return a ? JSON.parse(chop0(a)) : false
+  } catch (e) {
+    return false
+  }
 }
 
 const textSortCats = (a, b) => {
@@ -103,8 +110,6 @@ module.exports = class {
 
   newImageUpload (options) {
     options.body = new FormData()
-    // add actual file content
-    // form.append('my_file', fs.createReadStream(options.source))
     options.body.append('source', fs.createReadStream(options.source))
     options.body.append('type', 'file')
     options.body.append('action', 'upload')
@@ -116,29 +121,27 @@ module.exports = class {
     return options
   }
 
-  XX (options) {
+  doit (options) {
     const u = url.parse(this.root)
-    u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
+    u.headers = {
+      'user-agent': `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`,
+      accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
+    }
 
-    return new Promise((resolve, reject) => {
-      const u = url.parse(this.root)
-      u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
-
-      options.body.submit(u, (e, res) => {
-        if (e) { return reject(e) }
-        let body = ''
-        res.on('data', (g) => { body += g })
-        res.on('end', () => {
-          try {
-            body = JSON.parse(body)
-            resolve({ body, headers: res.headers })
-          } catch (e) {
-            reject(e)
-          }
-        })
-        res.on('error', (e) => reject(e))
+    return new Promise((resolve, reject) => options.body.submit(u, (e, res) => {
+      if (e) { return reject(e) }
+      let body = ''
+      res.on('data', (g) => { body += g })
+      res.on('end', () => {
+        try {
+          body = JSON.parse(body)
+          resolve({ body, headers: res.headers })
+        } catch (e) {
+          reject(e)
+        }
       })
-    })
+      res.on('error', (e) => reject(e))
+    }))
   }
 
   validCategory (category) {
@@ -166,19 +169,23 @@ module.exports = class {
     if (sessionCookie) { this.sessionCookie = sessionCookie }
     const u = url.parse(this.root)
 
-    if (process.env.CATEGORY) {
-      const catId = parseInt(process.env.CATEGORY, 10)
-      if (catId == process.env.CATEGORY) { this.category(catId) }
-    }
-
     // almost any page would do, but this is a short one
     u.path = '/page/contact'
-    return got(u, { headers: { cookie: cookie.serialize('PHPSESSID', this.sessionCookie) } })
+    return got(u, {
+      headers: {
+        'user-agent': `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`,
+        cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
+      }
+    })
       .then(parse)
       .then((x) => {
         Object.assign(this, x)
+        if (process.env.CATEGORY) {
+          const catId = parseInt(process.env.CATEGORY, 10)
+          this.category(catId == process.env.CATEGORY ? catId : process.env.CATEGORY)
+        }
         this.error = false
-        if (this.user) {
+        if (this.connected) {
           this.updatedAt = Date.now()
           return this
         }
@@ -191,8 +198,10 @@ module.exports = class {
       })
   }
 
+  get connected () { return Boolean(this.user) }
+
   byUrl (options) {
-    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
     const to = typeof options
     if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
     if (to === 'string') { options = { url: options } }
@@ -202,11 +211,11 @@ module.exports = class {
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUrl(options)
     console.log('options:', options)
-    return this.XX(options)
+    return this.doit(options)
   }
 
   byFile (options) {
-    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
     const to = typeof options
     if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
     if (to === 'string') { options = { source: options } }
@@ -215,11 +224,11 @@ module.exports = class {
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUpload(options)
     console.log('options:', options)
-    return this.XX(options)
+    return this.doit(options)
   }
 
   edit (options) {
-    if (!this.user) { return Promise.reject(new Error('Not connected.')) }
+    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
     return Promise.reject(new Error('Not implemented yet.'))
   }
 }

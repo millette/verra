@@ -113,25 +113,7 @@ module.exports = class {
   XX (options) {
     const u = url.parse(this.root)
     u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
-/*
-    const submit = pify(options.body.submit)
-    return submit(u)
-      .then((res) => {
-        let body = ''
-        res.on('data', (g) => {
-          console.log('typeof g:', typeof g)
-          body += g
-        })
-        res.on('end', () => {
-          try {
-            return { body: JSON.parse(body), headers: res.headers }
-          } catch (e) {
-            return Promise.reject(e)
-          }
-        })
-        res.on('error', Promise.reject)
-      })
-*/
+
     return new Promise((resolve, reject) => {
       const u = url.parse(this.root)
       u.headers = { accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie) }
@@ -139,10 +121,7 @@ module.exports = class {
       options.body.submit(u, (e, res) => {
         if (e) { return reject(e) }
         let body = ''
-        res.on('data', (g) => {
-          console.log('typeof g:', typeof g)
-          body += g
-        })
+        res.on('data', (g) => { body += g })
         res.on('end', () => {
           try {
             body = JSON.parse(body)

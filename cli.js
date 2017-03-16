@@ -31,8 +31,9 @@ const updateNotifier = require('update-notifier')
 
 // self
 const Verra = require('./')
+const pkg = require('./package.json')
 
-updateNotifier({ pkg: require('./package.json') }).notify()
+updateNotifier({ pkg }).notify()
 
 const cli = meow([
   'Usage',
@@ -50,21 +51,32 @@ const cli = meow([
 
 const verra = new Verra()
 
+const showCategories = (x) => {
+  console.log('Categories')
+  console.log(`${x.categories.length} categories:`)
+  x.categories.forEach((y) => {
+    console.log(`${y.text}${x.defaultCategory === y.id ? ' * ' : ' '}(${y.id}) at https://file.army/category/${y.path}`)
+  })
+}
+
 verra.init()
   .then((x) => {
-    console.log(`${x.categories.length} categories:`)
-    x.categories.forEach((y) => {
-      // console.log(`${y.text} (${y.id}) at https://file.army/category/${y.path}`)
-    })
+    if (x.connected) {
+      console.log('Connected as', x.user)
+    } else {
+      console.log(`Not connected, verify token (${process.env.FILEARMY_TOKEN}).
+Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
+    }
+    switch (cli.input[0]) {
+      case 'categories':
+        showCategories(x)
+        break
+
+      default:
+        console.log('Have a nice day.')
+    }
   })
   .catch(console.error)
-
-/*
-verra(cli.input[0] || 'unicorns')
-  .then((response) => {
-    console.log(response)
-  })
-*/
 
 /*
 

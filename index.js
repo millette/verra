@@ -121,15 +121,14 @@ module.exports = class {
     return options
   }
 
-  get version () {
-    return `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}`
-  }
+  get version () { return `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}` }
 
   doit (options) {
     const u = url.parse(this.root)
     u.headers = {
       'user-agent': this.version,
-      accept: 'application/json', cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
+      accept: 'application/json',
+      cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
     }
 
     return new Promise((resolve, reject) => options.body.submit(u, (e, res) => {
@@ -158,7 +157,7 @@ module.exports = class {
   get elapsed () { return Date.now() - this.updatedAt }
 
   category (id) {
-    if (!id) {
+    if (!id || id === true) {
       this.defaultCategory = false
       return this
     }
@@ -186,7 +185,7 @@ module.exports = class {
         Object.assign(this, x)
         if (process.env.CATEGORY) {
           const catId = parseInt(process.env.CATEGORY, 10)
-          this.category(catId == process.env.CATEGORY ? catId : process.env.CATEGORY)
+          this.category(catId == process.env.CATEGORY ? catId : process.env.CATEGORY) // eslint-disable-line eqeqeq
         }
         this.error = false
         if (this.connected) {
@@ -227,7 +226,7 @@ module.exports = class {
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUpload(options)
-    console.log('options:', options)
+    // console.log('options:', options)
     return this.doit(options)
   }
 

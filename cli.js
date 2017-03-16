@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 require('dotenv-safe').load()
 const meow = require('meow')
 const updateNotifier = require('update-notifier')
+const url = require('url')
+const fs = require('fs')
 
 // self
 const Verra = require('./')
@@ -61,21 +63,41 @@ const showCategories = (x) => {
 
 verra.init()
   .then((x) => {
+    if (cli.flags.category) { x.category(cli.flags.category) }
     if (x.connected) {
-      console.log('Connected as', x.user)
+      console.log('Connected as', x.user.name || x.user.username)
     } else {
       console.log(`Not connected, verify token (${process.env.FILEARMY_TOKEN}).
 Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
+    }
+    if (x.defaultCategory) {
+      console.log(`Default category id: ${x.defaultCategory}`)
     }
     switch (cli.input[0]) {
       case 'categories':
         showCategories(x)
         break
 
-      default:
-        console.log('Have a nice day.')
+      case 'url':
+        if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`))}
+        const u = url.parse(cli.input[1])
+        if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
+          return Promise.reject(new Error(`${cli.input[1]} doesn't look like a url.`))
+        }
+        return x.byUrl(cli.input[1])
+        break
+
+      case 'file':
+        if (!cli.input[1]) { return Promise.reject(new Error(`Missing file argument.`)) }
+        if (!fs.existsSync(cli.input[1])) {
+          return Promise.reject(new Error(`File ${cli.input[1]} doesn't exist.`))
+        }
+        return x.byFile(cli.input[1])
+        break
     }
+    return 'Have a nice day.'
   })
+  .then(console.log)
   .catch(console.error)
 
 /*

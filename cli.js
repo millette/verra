@@ -28,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 require('dotenv-safe').load()
 const meow = require('meow')
 const updateNotifier = require('update-notifier')
+const chokidar = require('chokidar')
+
+// core
 const url = require('url')
 const fs = require('fs')
 
@@ -73,6 +76,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
     if (x.defaultCategory) {
       console.log(`Default category id: ${x.defaultCategory}`)
     }
+    let method
     switch (cli.input[0]) {
       case 'categories':
         showCategories(x)
@@ -84,7 +88,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
         if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
           return Promise.reject(new Error(`${cli.input[1]} doesn't look like a url.`))
         }
-        return x.byUrl(cli.input[1])
+        method = 'byUrl'
         break
 
       case 'file':
@@ -92,21 +96,34 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
         if (!fs.existsSync(cli.input[1])) {
           return Promise.reject(new Error(`File ${cli.input[1]} doesn't exist.`))
         }
-        return x.byFile(cli.input[1])
+        method = 'byFile'
         break
+
+      case 'watch':
+        // XX
+        // chokidar
+        break
+
+      case 'version':
+        console.log(x.version)
+        break
+
+      case 'help':
+      default:
+        console.log(`
+Available commands:
+  * help (this text)
+  * version
+  * categories
+  * url <url>
+  * file <filename>
+
+Possible flags:
+  * --category <category|INTEGER|STRING>
+`)
     }
+    if (method) { return x[method](cli.input[1]) }
     return 'Have a nice day.'
   })
   .then(console.log)
   .catch(console.error)
-
-/*
-
-const verra = new Verra()
-verra.init()
-  // .then((x) => x.category('33').byUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Euthalia_aconthea-Kadavoor-2016-06-25-003.jpg/1280px-Euthalia_aconthea-Kadavoor-2016-06-25-003.jpg'))
-  // .then((x) => x.byUrl('https://pbs.twimg.com/media/C6ord3qWgAEF9pX.jpg'))
-  .then((x) => x.byFile('/home/millette/booya.jpg'))
-  .then(console.log)
-  .catch(console.error)
-*/

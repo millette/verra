@@ -50,6 +50,7 @@ Available commands:
   * This text: help
   * Name and version: version
   * List all categories: categories
+  * Init watch directory: init <dir>
   * Upload new image by URL: url <url>
   * Upload new image by filename: file <filename>
   * Watch a directory for new images to upload: watch <dir>
@@ -58,20 +59,26 @@ Possible flags:
   * --category=<category|INTEGER|STRING>
   * --category (disables default category found in .env)
   * --wait=<seconds|INTEGER> (waits between [seconds] and 1.5 * [seconds])
+  * --type=<type|STRING> (directory init: "categories" or "albums")
 `
   },
   {
     alias: {
       category: 'c',
-      wait: 'w'
+      wait: 'w',
+      type: 't'
     },
     boolean: true,
-    default: { wait: parseInt(process.env.VERRA_WAIT, 10) || (5 * 60) }
+    default: {
+      wait: parseInt(process.env.VERRA_WAIT, 10) || (5 * 60)
+    }
   }
 )
 
 updateNotifier(cli).notify()
 
+const rename = pify(fs.rename)
+const mkdir = pify(mkdirp)
 const verra = new Verra()
 
 const categoriesCommand = (x) => {
@@ -81,6 +88,24 @@ const categoriesCommand = (x) => {
     ar.push(`${y.text}${x.defaultCategory === y.id ? ' * ' : ' '}(${y.id}) at https://file.army/category/${y.path}`)
   })
   return ar.join('\n')
+}
+
+const initCommand = (x) => {
+  if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
+  if (!fs.existsSync(cli.input[1])) {
+    return Promise.reject(new Error(`Directory ${cli.input[1]} doesn't exist.`))
+  }
+
+  if (cli.flags.type !== 'categories' && cli.flags.type !== 'albums') {
+    return Promise.reject(new Error(`Flag --type should be either "categories" or "albums".`))
+  }
+
+  if (cli.flags.type === 'albums') {
+    return Promise.reject(new Error(`Flag --type=albums isn't supported yet.`))
+  }
+
+  return Promise.all(x.categories.map((y) => mkdirp(path.resolve(cli.input[1], y.path))))
+    .then((c) => `Created ${c.length} category directories in ${cli.input[1]}.`)
 }
 
 const fileCommand = (x) => {
@@ -99,9 +124,6 @@ const urlCommand = (x) => {
   }
   return x.byUrl(cli.input[1])
 }
-
-const rename = pify(fs.rename)
-const mkdir = pify(mkdirp)
 
 const moveFile = (x, p) => {
   const newPath = path.resolve(x.doneDir, path.relative(x.watchDir, p))
@@ -131,11 +153,22 @@ const watchCommand = (x) => {
   x.watchDir = dir
   x.doneDir = path.resolve(x.watchDir, '.done')
   if (!fs.existsSync(x.doneDir)) { mkdirp.sync(x.doneDir) }
+
+  if (cli.flags.type && cli.flags.type !== 'categories' && cli.flags.type !== 'albums') {
+    return Promise.reject(new Error(`Flag --type should be either "categories" or "albums".`))
+  }
+
+  if (cli.flags.type === 'albums') {
+    return Promise.reject(new Error(`Flag --type=albums isn't supported yet.`))
+  }
+
+  if (cli.flags.type === 'categories') { x.watchType = cli.flags.type }
+
   x.watcher = chokidar.watch(dir, { ignored: x.doneDir })
   x.watcher.on('all', (ev, p) => {
     if (ev !== 'change' && ev !== 'add') { return }
     processing(x, p)
-      .then((aa) => { console.log('processed', aa) })
+      .then((aa) => { console.log('processed', JSON.stringify(aa, null, '  ')) })
       .catch(console.error)
   })
   return `Watching ${dir}...`
@@ -159,6 +192,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
       case 'url': return urlCommand(x)
       case 'file': return fileCommand(x)
       case 'watch': return watchCommand(x)
+      case 'init': return initCommand(x)
       case 'version': return x.version
       default: cli.showHelp()
     }

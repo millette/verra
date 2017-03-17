@@ -4,16 +4,62 @@
 [![Dependency Status](https://gemnasium.com/badges/github.com/millette/verra.svg)](https://gemnasium.com/github.com/millette/verra)
 > File.army client.
 
+## Requirements
+You need three things:
+
+* node 6 or above
+* a [bitcoinwallet][] account
+* a [file.army][] account
+
+### Node 6
+I recommend [n-install][] to install and manage current node versions.
+
+```
+curl -L https://git.io/n-install | bash
+```
+
+This will also install ```npm```, the default node package manager.
+
+### file.army
+[file.army][] is of course the site that pays you (in bitcoins) to share interesting images.
+
+You will find the author's account at <https://file.army/robinmillette>,
+you're encouraged to follow him :-)
+
+### bitcoinwallet
+[bitcoinwallet][] is required by [file.army][] to get paid (in bitcoins).
+The provided link uses my account as a reference.
+
 ## Install
 ```
-$ npm install --save verra
+$ npm install --global verra
+```
+
+### Help
+```
+$ verra --help
+
+  File.army client.
+
+  Available commands:
+    * This text: help
+    * Name and version: version
+    * List all categories: categories
+    * Upload new image by URL: url <url>
+    * Upload new image by filename: file <filename>
+    * Watch a directory for new images to upload: watch <dir>
+
+  Possible flags:
+    * --category=<category|INTEGER|STRING>
+    * --category (disables default category found in .env)
+    * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
 ```
 
 ## Now with update-notifier
 The cli now uses [update-notifier][] to let the user know about updates to this program.
 
 Users have the ability to opt-out of the update notifier by changing
-the optOut property to true in ~/.config/configstore/update-notifier-rollodeqc-gh-user-streak.json.
+the optOut property to true in ~/.config/configstore/update-notifier-verra.json.
 The path is available in notifier.config.path.
 
 Users can also opt-out by setting the environment variable NO_UPDATE_NOTIFIER
@@ -33,51 +79,24 @@ javascript:void(function(){alert(document.cookie.split(';').filter((z)=>z.split(
 
 Once logged in, run the bookmarklet to obtain your credentials.
 
-## Usage
-```js
-const verra = require('verra')
-
-verra('unicorns')
-//=> 'unicorns & rainbows'
-```
-
-## API
-### verra(input, [options])
-#### input
-Type: `string`
-
-Lorem ipsum.
-
-#### options
-##### foo
-Type: `boolean`<br>
-Default: `false`
-
-Lorem ipsum.
-
-## CLI
-```
-$ npm install --global verra
-```
+### Env file
+Create a ```.env``` file with the following content:
 
 ```
-$ verra --help
-
-  Usage
-    verra [input]
-
-  Options
-    --foo  Lorem ipsum. [Default: false]
-
-  Examples
-    $ verra
-    unicorns & rainbows
-    $ verra ponies
-    ponies & rainbows
+FILEARMY_TOKEN=[Your current PHPSESSID]
 ```
 
+You can also provide a default category if that's your thing:
+```
+FILEARMY_TOKEN=[Your current PHPSESSID]
+CATEGORY=[Default category key]
+```
 
 ## License
-AGPL-v3 © [Robin Millette](http://robin.millette.info)
+AGPL-v3 © [Robin Millette][]
 
+[Robin Millette]: <http://robin.millette.info>
 [update-notifier]: <https://github.com/yeoman/update-notifier>
+[bitcoinwallet]: <https://bitcoinwallet.com/?uo=milette>
+[file.army]: <https://file.army/>
+[n-install]: <https://github.com/mklement0/n-install>

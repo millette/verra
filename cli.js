@@ -153,15 +153,12 @@ const watchCommand = (x) => {
   x.watchDir = dir
   x.doneDir = path.resolve(x.watchDir, '.done')
   if (!fs.existsSync(x.doneDir)) { mkdirp.sync(x.doneDir) }
-
   if (cli.flags.type && cli.flags.type !== 'categories' && cli.flags.type !== 'albums') {
     return Promise.reject(new Error(`Flag --type should be either "categories" or "albums".`))
   }
-
   if (cli.flags.type === 'albums') {
     return Promise.reject(new Error(`Flag --type=albums isn't supported yet.`))
   }
-
   if (cli.flags.type === 'categories') { x.watchType = cli.flags.type }
 
   x.watcher = chokidar.watch(dir, { ignored: x.doneDir })

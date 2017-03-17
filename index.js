@@ -116,12 +116,12 @@ module.exports = class {
   }
 
   newImageUrl (options) {
-    options.body = fileFormSetup(options.category, this.token, options.url)
+    options.body = urlFormSetup(options.category, this.token, options.url)
     return options
   }
 
-  newImageUpload (options) {
-    options.body = urlFormSetup(options.category, this.token, options.source)
+  newImageFile (options) {
+    options.body = fileFormSetup(options.category, this.token, options.source)
     return options
   }
 
@@ -226,7 +226,7 @@ module.exports = class {
     if (!options.source) { return Promise.reject(new Error('Missing source file name.')) }
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
-    this.newImageUpload(options)
+    this.newImageFile(options)
     return this.doit(options)
   }
 

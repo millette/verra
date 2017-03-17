@@ -41,14 +41,36 @@ const path = require('path')
 
 // self
 const Verra = require('./')
-const pkg = require('./package.json')
 
-updateNotifier({ pkg }).notify()
+const cli = meow(
+  {
+    inferType: true,
+    help: `
+Available commands:
+  * This text: help
+  * Name and version: version
+  * List all categories: categories
+  * Upload new image by URL: url <url>
+  * Upload new image by filename: file <filename>
+  * Watch a directory for new images to upload: watch <dir>
 
-const cli = meow({}, {
-  boolean: true,
-  default: { wait: 5 * 60 }
-})
+Possible flags:
+  * --category=<category|INTEGER|STRING>
+  * --category (disables default category found in .env)
+  * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
+`
+  },
+  {
+    alias: {
+      category: 'c',
+      wait: 'w'
+    },
+    boolean: true,
+    default: { wait: 5 * 60 }
+  }
+)
+
+updateNotifier(cli).notify()
 
 const verra = new Verra()
 
@@ -79,22 +101,6 @@ const urlCommand = (x) => {
   }
   return x.byUrl(cli.input[1])
 }
-
-const helpCommand = (x) => `
-${x.version}
-
-Available commands:
-  * This text: help
-  * Name and version: version
-  * List all categories: categories
-  * Upload new image by URL: url <url>
-  * Upload new image by filename: file <filename>
-  * Watch a directory for new images to upload: watch <dir>
-
-Possible flags:
-  * --category <category|INTEGER|STRING>
-  * --wait <seconds|INTEGER> (waits between seconds and 1.5 * seconds)
-`
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
@@ -156,8 +162,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
       case 'file': return fileCommand(x)
       case 'watch': return watchCommand(x)
       case 'version': return x.version
-      case 'help':
-      default: return helpCommand(x)
+      default: cli.showHelp()
     }
   })
   .then(console.log)

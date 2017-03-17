@@ -19,6 +19,7 @@
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "files": [
+    ".env.example",
     "index.js",
     "cli.js"
   ],

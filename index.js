@@ -34,6 +34,11 @@ const got = require('got')
 const cookie = require('cookie')
 const FormData = require('form-data')
 
+if (process.env.CATEGORY) {
+  console.log('CATEGORY env var is deprecated. Please use FILEARMY_CATEGORY instead.')
+  process.env.FILEARMY_CATEGORY = process.env.CATEGORY
+}
+
 const re1 = /PF\.obj\.config\.auth_token(.+);/
 const re2 = /PF\.obj\.config\.json_api(.+);/
 const re3 = /\bmax_filesize(.+),/
@@ -187,9 +192,9 @@ module.exports = class {
       .then(parse)
       .then((x) => {
         Object.assign(this, x)
-        if (process.env.CATEGORY) {
-          const catId = parseInt(process.env.CATEGORY, 10)
-          this.category(catId == process.env.CATEGORY ? catId : process.env.CATEGORY) // eslint-disable-line eqeqeq
+        if (process.env.FILEARMY_CATEGORY) {
+          const catId = parseInt(process.env.FILEARMY_CATEGORY, 10)
+          this.category(catId == process.env.FILEARMY_CATEGORY ? catId : process.env.FILEARMY_CATEGORY) // eslint-disable-line eqeqeq
         }
         this.error = false
         if (this.connected) {

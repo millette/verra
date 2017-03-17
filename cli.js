@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 'use strict'
 
 // npm
-require('dotenv-safe').load()
+require('dotenv-safe').load({ sample: [__dirname, '.env.required'].join('/') })
 const meow = require('meow')
 const updateNotifier = require('update-notifier')
 const chokidar = require('chokidar')

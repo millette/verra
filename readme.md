@@ -70,14 +70,38 @@ You must login manually thru the website.
 
 ### Bookmarklet
 ```
-javascript:void(function(){$('a').each((x,y)=>{if(y.href.indexOf('logout')!==-1){alert(`auth_token:%20${y.search.split('=').slice(1).join('=')}\nPHPSESSID:%20${document.cookie.split(';').filter((z)=>z.split('=')[0]==='PHPSESSID').map((z)=>z.split('=').slice(1).join('='))[0]}`)}})}())
-```
-
-```
-javascript:void(function(){alert(document.cookie.split(';').filter((z)=>z.split('=')[0]==='PHPSESSID').map((z)=>z.split('=').slice(1).join('='))[0])}())
+javascript:void(function(){alert('FILEARMY_TOKEN='+document.cookie.split(';').filter((z)=>z.split('=')[0].trim()==='PHPSESSID').map((z)=>z.split('=').slice(1).join('='))[0])}())
 ```
 
 Once logged in, run the bookmarklet to obtain your credentials.
+
+What's a bookmarklet you ask? It's just a browser bookmark but instead
+of a link to a page, it holds a bit of javascript. So create a bookmark
+(on your toolbar if you can) and simply paste the above line of code
+for the bookmark location (or URL).
+
+Basically, we alert (with that annoying infobox) the user and display
+the value of the PHPSESSID cookie. In other words:
+```
+javascript:void(
+  function () {
+    alert('FILEARMY_TOKEN='+
+      document.cookie
+        .split(';')
+        .filter((z)=>z.split('=')[0].trim()==='PHPSESSID')
+        .map((z)=>z.split('=').slice(1).join('='))[0]
+    )
+  }()
+)
+```
+
+You could also open a JavaScript console and type:
+```
+document.cookie
+```
+
+... and figure out the PHPSESSID value to use. It's all good.
+Eventually, we hope, **verra** will support an improved login feature.
 
 ### Env file
 Create a ```.env``` file with the following content:

@@ -57,7 +57,7 @@ Available commands:
 Possible flags:
   * --category=<category|INTEGER|STRING>
   * --category (disables default category found in .env)
-  * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
+  * --wait=<seconds|INTEGER> (waits between [seconds] and 1.5 * [seconds])
 `
   },
   {
@@ -66,15 +66,13 @@ Possible flags:
       wait: 'w'
     },
     boolean: true,
-    default: { wait: process.env.VERRA_WAIT || (5 * 60) }
+    default: { wait: parseInt(process.env.VERRA_WAIT, 10) || (5 * 60) }
   }
 )
 
 updateNotifier(cli).notify()
 
 const verra = new Verra()
-
-const seconds = cli.flags.wait
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']
@@ -112,7 +110,7 @@ const moveFile = (x, p) => {
     .then(() => `Moved ${p} to ${newPath}...`)
 }
 
-const processImp = (x, p) => delay(Math.random() * seconds / 2 * 1000)
+const processImp = (x, p) => delay(Math.random() * cli.flags.wait / 2 * 1000)
   .then(() => x.byFile(p))
   .then((y) => Promise.all([y, moveFile(x, p)]))
   .then((y) => {
@@ -122,7 +120,7 @@ const processImp = (x, p) => delay(Math.random() * seconds / 2 * 1000)
     }
   })
 
-const processing = pThrottle(processImp, 1, seconds * 1000)
+const processing = pThrottle(processImp, 1, cli.flags.wait * 1000)
 
 const watchCommand = (x) => {
   if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }

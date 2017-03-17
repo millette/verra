@@ -36,7 +36,7 @@ const cookie = require('cookie')
 const FormData = require('form-data')
 
 if (process.env.CATEGORY) {
-  console.log('CATEGORY env var is deprecated. Please use FILEARMY_CATEGORY instead.')
+  console.log('Warning: CATEGORY env var is deprecated. Please use FILEARMY_CATEGORY instead. CATEGORY will be removed in an upcoming release.')
   process.env.FILEARMY_CATEGORY = process.env.CATEGORY
 }
 

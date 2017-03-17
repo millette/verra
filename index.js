@@ -80,7 +80,6 @@ const parse = (res) => {
   return { headers, token, root, maxFilesize, imageTypes, user, categories }
 }
 
-
 const formSetup = (type, category, token, source) => {
   const body = new FormData()
   body.append('action', 'upload')

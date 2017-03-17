@@ -37,7 +37,7 @@ $ npm install --global verra
 
 ### Help
 ```
-$ verra --help
+$ verra
 
   File.army client.
 
@@ -54,16 +54,6 @@ $ verra --help
     * --category (disables default category found in .env)
     * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
 ```
-
-## Now with update-notifier
-The cli now uses [update-notifier][] to let the user know about updates to this program.
-
-Users have the ability to opt-out of the update notifier by changing
-the optOut property to true in ~/.config/configstore/update-notifier-verra.json.
-The path is available in notifier.config.path.
-
-Users can also opt-out by setting the environment variable NO_UPDATE_NOTIFIER
-with any value or by using the --no-update-notifier flag on a per run basis.
 
 ## Login
 You must login manually thru the website.
@@ -115,6 +105,16 @@ You can also provide a default category if that's your thing:
 FILEARMY_TOKEN=[Your current PHPSESSID]
 CATEGORY=[Default category key]
 ```
+
+## Now with update-notifier
+The cli now uses [update-notifier][] to let the user know about updates to this program.
+
+Users have the ability to opt-out of the update notifier by changing
+the optOut property to true in ~/.config/configstore/update-notifier-verra.json.
+The path is available in notifier.config.path.
+
+Users can also opt-out by setting the environment variable NO_UPDATE_NOTIFIER
+with any value or by using the --no-update-notifier flag on a per run basis.
 
 ## License
 AGPL-v3 © [Robin Millette][]

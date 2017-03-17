@@ -116,7 +116,7 @@ const processImp = (x, p) => delay(Math.random() * seconds / 2 * 1000)
     }
   })
 
-const process = pThrottle(processImp, 1, seconds * 1000)
+const processing = pThrottle(processImp, 1, seconds * 1000)
 
 const watchCommand = (x) => {
   if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
@@ -130,7 +130,7 @@ const watchCommand = (x) => {
   x.watcher = chokidar.watch(dir, { ignored: x.doneDir })
   x.watcher.on('all', (ev, p) => {
     if (ev !== 'change' && ev !== 'add') { return }
-    process(x, p)
+    processing(x, p)
       .then((aa) => { console.log('processed', aa) })
       .catch(console.error)
   })

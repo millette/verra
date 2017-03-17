@@ -53,6 +53,27 @@ $ verra
     * --category=<category|INTEGER|STRING>
     * --category (disables default category found in .env)
     * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
+    * --type=<type|STRING> (directory init: "categories" or "albums")
+```
+
+## Watching a directory
+One of the most interesting features of **verra** is its ability
+to watch a directory for files to upload.
+
+```
+$ verra watch A-DIRECTORY-WITH-IMAGES
+```
+
+Every file from that directory and subdirectories will be uploaded
+to [file.army][] using the filename as the image title,
+waiting 5 to 7 minutes between uploads by default.
+
+A default category will be used if provided, but you can also
+organize your images in directories according to categories.
+
+```
+$ verra init A-DIRECTORY-WITH-IMAGES --type=categories # create subdirectories
+$ verra watch A-DIRECTORY-WITH-IMAGES --type=categories # start watching
 ```
 
 ## Login

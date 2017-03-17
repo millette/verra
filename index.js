@@ -28,6 +28,7 @@ const pkg = require('./package.json')
 // core
 const url = require('url')
 const fs = require('fs')
+const path = require('path')
 
 // npm
 const got = require('got')
@@ -120,19 +121,29 @@ module.exports = class {
     this.error = false
   }
 
+  get version () { return `${pkg.name} ${pkg.version} ${pkg.repository.url || ('https://github.com/' + pkg.repository)}` }
+  get elapsed () { return Date.now() - this.updatedAt }
+  get connected () { return Boolean(this.user) }
+
+  validCategory (category) {
+    let found = false
+    if (typeof category === 'string') { found = this.categories.find((x) => category === x.path) }
+    if (typeof category === 'number') { found = this.categories.find((x) => category === x.id) }
+    return (found && found.id) || false
+  }
+
   newImageUrl (options) {
     options.body = urlFormSetup(options.category, this.token, options.url)
     return options
   }
 
   newImageFile (options) {
+    if (this.watchType === 'categories') {
+      options.category = this.validCategory(path.dirname(options.source).split('/').slice(-1)[0])
+    }
     options.body = fileFormSetup(options.category, this.token, options.source)
     return options
   }
-
-  get version () { return `${pkg.name} ${pkg.version} ${pkg.repository.url || ('https://github.com/' + pkg.repository)}` }
-  get elapsed () { return Date.now() - this.updatedAt }
-  get connected () { return Boolean(this.user) }
 
   doit (options) {
     const u = url.parse(this.root)
@@ -156,13 +167,6 @@ module.exports = class {
       })
       res.on('error', (e) => reject(e))
     }))
-  }
-
-  validCategory (category) {
-    let found = false
-    if (typeof category === 'string') { found = this.categories.find((x) => category === x.path) }
-    if (typeof category === 'number') { found = this.categories.find((x) => category === x.id) }
-    return (found && found.id) || false
   }
 
   category (id) {
@@ -219,7 +223,6 @@ module.exports = class {
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUrl(options)
-    console.log('options:', options)
     return this.doit(options)
   }
 

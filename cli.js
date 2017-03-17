@@ -60,6 +60,7 @@ Possible flags:
   * --category (disables default category found in .env)
   * --wait=<seconds|INTEGER> (waits between [seconds] and 1.5 * [seconds])
   * --type=<type|STRING> (directory init: "categories" or "albums")
+  * --incognito (hide user-agent and stuff)
 `
   },
   {
@@ -79,7 +80,7 @@ updateNotifier(cli).notify()
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
-const verra = new Verra()
+const verra = new Verra({ incognito: cli.flags.incognito })
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']
@@ -178,11 +179,9 @@ verra.init()
       console.log('Connected as', x.user.name || x.user.username)
     } else {
       console.log(`Not connected, verify token (${process.env.FILEARMY_TOKEN}).
-Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie.`)
+Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie or give it another try.`)
     }
-    if (x.defaultCategory) {
-      console.log(`Default category id: ${x.defaultCategory}`)
-    }
+    if (x.defaultCategory) { console.log(`Default category id: ${x.defaultCategory}`) }
 
     switch (cli.input[0]) {
       case 'categories': return categoriesCommand(x)

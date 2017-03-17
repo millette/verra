@@ -107,8 +107,11 @@ const fileFormSetup = formSetup.bind(null, 'file')
 const urlFormSetup = formSetup.bind(null, 'url')
 
 module.exports = class {
-  constructor (sessionCookie) {
-    this.sessionCookie = sessionCookie || process.env.FILEARMY_TOKEN
+  // constructor (sessionCookie) {
+  constructor (options) {
+    if (typeof options === 'string') { options = { sessionCookie: options } }
+    if (!options) { options = {} }
+    this.sessionCookie = options.sessionCookie || process.env.FILEARMY_TOKEN
     this.token = ''
     this.root = 'https://file.army'
     this.createdAt = this.updatedAt = Date.now()
@@ -118,6 +121,7 @@ module.exports = class {
     this.user = false
     this.categories = []
     this.defaultCategory = false
+    this.agent = options.incognito ? 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0' : this.version
     this.error = false
   }
 
@@ -148,7 +152,7 @@ module.exports = class {
   doit (options) {
     const u = url.parse(this.root)
     u.headers = {
-      'user-agent': this.version,
+      'user-agent': this.agent,
       accept: 'application/json',
       cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
     }
@@ -189,7 +193,7 @@ module.exports = class {
     u.path = '/page/contact'
     return got(u, {
       headers: {
-        'user-agent': this.version,
+        'user-agent': this.agent,
         cookie: cookie.serialize('PHPSESSID', this.sessionCookie)
       }
     })

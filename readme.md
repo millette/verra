@@ -54,6 +54,7 @@ $ verra
     * --category (disables default category found in .env)
     * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
     * --type=<type|STRING> (directory init: "categories" or "albums")
+    * --incognito (user-agent imposter and stuff)
 ```
 
 ## Watching a directory

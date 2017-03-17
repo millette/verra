@@ -121,6 +121,6 @@ AGPL-v3 © [Robin Millette][]
 
 [Robin Millette]: <http://robin.millette.info>
 [update-notifier]: <https://github.com/yeoman/update-notifier>
-[bitcoinwallet]: <https://bitcoinwallet.com/?uo=milette>
+[bitcoinwallet]: <https://bitcoinwallet.com/?rb=21d8e442-fe14-11e6-9d6c-1866da6cbe53>
 [file.army]: <https://file.army/>
 [n-install]: <https://github.com/mklement0/n-install>

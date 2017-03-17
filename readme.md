@@ -103,8 +103,12 @@ FILEARMY_TOKEN=[Your current PHPSESSID]
 You can also provide a default category if that's your thing:
 ```
 FILEARMY_TOKEN=[Your current PHPSESSID]
-CATEGORY=[Default category key]
+FILEARMY_CATEGORY=[Default category key]
+VERRA_WAIT=[Wait time in seconds]
 ```
+
+The entry ```CATEGORY=[Default category key]``` is deprecated
+and replaced by FILEARMY_CATEGORY.
 
 ## Now with update-notifier
 The cli now uses [update-notifier][] to let the user know about updates to this program.

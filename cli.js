@@ -66,7 +66,7 @@ Possible flags:
       wait: 'w'
     },
     boolean: true,
-    default: { wait: 5 * 60 }
+    default: { wait: process.env.VERRA_WAIT || (5 * 60) }
   }
 )
 

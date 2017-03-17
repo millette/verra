@@ -125,7 +125,7 @@ module.exports = class {
     return options
   }
 
-  get version () { return `${pkg.name} ${pkg.version} https://github.com/${pkg.repository}` }
+  get version () { return `${pkg.name} ${pkg.version} ${pkg.repository.url || ('https://github.com/' + pkg.repository)}` }
   get elapsed () { return Date.now() - this.updatedAt }
   get connected () { return Boolean(this.user) }
 

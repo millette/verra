@@ -35,6 +35,17 @@ The provided link uses my account as a reference.
 $ npm install --global verra
 ```
 
+Don't worry if you see these warnings:
+```
+npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@^1.0.0 (node_modules/verra/node_modules/chokidar/node_modules/fsevents):
+npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@1.1.1: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+```
+
+## Upgrade
+```
+$ npm update --global  verra
+```
+
 ### Help
 ```
 $ verra

@@ -67,6 +67,8 @@ $ verra
     * This text: help
     * Name and version: version
     * List all categories: categories
+    * Init watch directory: init <dir>
+    * Fetch image info: image-json <url>
     * Upload new image by URL: url <url>
     * Upload new image by filename: file <filename>
     * Watch a directory for new images to upload: watch <dir>

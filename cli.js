@@ -33,6 +33,7 @@ const mkdirp = require('mkdirp')
 const pify = require('pify')
 const delay = require('delay')
 const pThrottle = require('p-throttle')
+const metascraper = require('metascraper')
 
 // core
 const url = require('url')
@@ -51,6 +52,7 @@ Available commands:
   * Name and version: version
   * List all categories: categories
   * Init watch directory: init <dir>
+  * Fetch image info: image-json <url>
   * Upload new image by URL: url <url>
   * Upload new image by filename: file <filename>
   * Watch a directory for new images to upload: watch <dir>
@@ -82,6 +84,27 @@ updateNotifier(cli).notify()
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
+
+const re1 = /CHV\.obj\.resource\.user = (\{[^]+\});/
+const re2 = /id: "(.+)",/
+const scraperRules = Object.assign({}, metascraper.RULES, {
+  albumHref: ($) => $('.description-meta a').not('[rel=tag]').attr('href'),
+  albumText: ($) => $('.description-meta a').not('[rel=tag]').text(),
+  categoryHref: ($) => $('.description-meta a[rel=tag]').attr('href'),
+  categoryText: ($) => $('.description-meta a[rel=tag]').text(),
+  views: ($) => parseInt($('.number-figures').eq(2).text(), 10),
+  likes: ($) => parseInt($('.number-figures [data-text=likes-count]').text(), 10),
+  width: ($) => parseInt($('meta[property="og:image:width"]').attr('content'), 10),
+  height: ($) => parseInt($('meta[property="og:image:height"]').attr('content'), 10),
+  authorLink: ($) => $('.user-link[rel=author]').attr('href'),
+  authorId: ($) => $('script').eq(17).text().match(re1)[1].match(re2)[1],
+  imageId: ($) => $('#modal-share-url').attr('value').split('/').slice(-1)[0],
+  albumId: ($) => $('.description-meta a').not('[rel=tag]').attr('href').split('/').slice(-1)[0],
+  categoryId: ($) => $('.description-meta a[rel=tag]').attr('href').split('/').slice(-1)[0],
+  date: ($) => $('.description-meta span').attr('title')
+})
+
+const imageData = (html) => metascraper[url.parse(html).protocol ? 'scrapeUrl' : 'scrapeHtml'](html, scraperRules)
 
 const incognito = (() => {
   let incognitoA = false
@@ -163,6 +186,15 @@ const processImp = (x, p) => delay(Math.random() * cli.flags.wait / 2 * 1000)
 
 const processing = pThrottle(processImp, 1, cli.flags.wait * 1000)
 
+const imageJsonCommand = () => {
+  if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`)) }
+  const u = url.parse(cli.input[1])
+  if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
+    cli.input[1] = ['https://file.army/i', cli.input[1]].join('/')
+  }
+  return imageData(cli.input[1])
+}
+
 const watchCommand = (x) => {
   if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
   const dir = path.resolve(cli.input[1])
@@ -206,6 +238,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie or give 
       case 'url': return urlCommand(x)
       case 'file': return fileCommand(x)
       case 'watch': return watchCommand(x)
+      case 'image-json': return imageJsonCommand()
       case 'init': return initCommand(x)
       case 'version': return x.version
       default: cli.showHelp()

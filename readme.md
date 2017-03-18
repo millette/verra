@@ -46,7 +46,18 @@ npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@
 $ npm update --global  verra
 ```
 
-### Help
+## Help
+Before you can use verra, you need to configure your FILEARMY_TOKEN
+as specified in the [login section](#login) below.
+
+Alternately, you can also specify the FILEARMY_TOKEN when launching verra:
+
+```
+$ FILEARMY_TOKEN=[YOUR-PHPSESSID-HERE] verra
+```
+
+Replace [YOUR-PHPSESSID-HERE] with your alphanum key.
+
 ```
 $ verra
 

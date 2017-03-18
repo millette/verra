@@ -56,9 +56,7 @@ const getUser = (str) => {
   try {
     const a = str.match(re4)
     return a ? JSON.parse(chop0(a)) : false
-  } catch (e) {
-    return false
-  }
+  } catch (e) { return false }
 }
 
 const textSortCats = (a, b) => {
@@ -95,11 +93,8 @@ const formSetup = (type, category, token, source) => {
   body.append('nsfw', '0')
   if (category) { body.append('category_id', String(category)) }
   body.append('type', type)
-  if (type === 'url') {
-    body.append('source', source)
-  } else if (type === 'file') {
-    body.append('source', fs.createReadStream(source))
-  }
+  if (type === 'url') { body.append('source', source) }
+  if (type === 'file') { body.append('source', fs.createReadStream(source)) }
   return body
 }
 
@@ -169,9 +164,7 @@ module.exports = class {
         try {
           body = JSON.parse(body)
           resolve({ body, headers: res.headers })
-        } catch (e) {
-          reject(e)
-        }
+        } catch (e) { reject(e) }
       })
       res.on('error', (e) => reject(e))
     }))

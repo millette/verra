@@ -62,6 +62,7 @@ Possible flags:
   * --type=<type|STRING> (directory init: "categories" or "albums")
   * --incognito (hide user-agent and stuff)
   * --incognito=<user-agent|STRING>
+  * --incognito=<false|no|0|STRING> to disable if it's set in the environment
 `
   },
   {
@@ -84,7 +85,6 @@ const mkdir = pify(mkdirp)
 
 const incognito = (() => {
   let incognitoA = false
-  let incognitoB = false
   const truthy = ['true', 'yes', '1', 1]
   const falsy = ['false', 'no', '0', 0]
   if (process.env.VERRA_INCOGNITO) {

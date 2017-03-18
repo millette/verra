@@ -78,7 +78,7 @@ $ verra
     * --type=<type|STRING> (directory init: "categories" or "albums")
     * --incognito (user-agent imposter and stuff)
     * --incognito=<user-agent|STRING>
-
+    * --incognito=<false|no|0|STRING> to disable if it's set in the environment
 ```
 
 ## Watching a directory
@@ -157,6 +157,9 @@ VERRA_INCOGNITO=Yes|True|1 or a User-Agent string
 
 The entry ```CATEGORY=[Default category key]``` is deprecated
 and replaced by FILEARMY_CATEGORY.
+
+#### Warning
+Don't put your .env file in the directory containing images you are watching.
 
 ## Now with update-notifier
 The cli now uses [update-notifier][] to let the user know about updates to this program.

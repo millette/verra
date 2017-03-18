@@ -61,6 +61,7 @@ Possible flags:
   * --wait=<seconds|INTEGER> (waits between [seconds] and 1.5 * [seconds])
   * --type=<type|STRING> (directory init: "categories" or "albums")
   * --incognito (hide user-agent and stuff)
+  * --incognito=<user-agent|STRING>
 `
   },
   {
@@ -80,7 +81,24 @@ updateNotifier(cli).notify()
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
-const verra = new Verra({ incognito: cli.flags.incognito || process.env.VERRA_INCOGNITO })
+
+const incognito = (() => {
+  let incognitoA = false
+  let incognitoB = false
+  const truthy = ['true', 'yes', '1', 1]
+  const falsy = ['false', 'no', '0', 0]
+  if (process.env.VERRA_INCOGNITO) {
+    incognitoA = process.env.VERRA_INCOGNITO === true || truthy.indexOf(process.env.VERRA_INCOGNITO.toLowerCase()) !== -1
+      ? true
+      : process.env.VERRA_INCOGNITO
+  }
+  if (cli.flags.incognito === undefined) { return incognitoA }
+  if (cli.flags.incognito === true || truthy.indexOf(cli.flags.incognito.toLowerCase()) !== -1) { return true }
+  if (!cli.flags.incognito || falsy.indexOf(cli.flags.incognito.toLowerCase()) !== -1) { return false }
+  return cli.flags.incognito
+})()
+
+const verra = new Verra({ incognito })
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']

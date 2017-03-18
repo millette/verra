@@ -77,6 +77,8 @@ $ verra
     * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)
     * --type=<type|STRING> (directory init: "categories" or "albums")
     * --incognito (user-agent imposter and stuff)
+    * --incognito=<user-agent|STRING>
+
 ```
 
 ## Watching a directory
@@ -150,7 +152,7 @@ as well as other settings:
 FILEARMY_TOKEN=[Your current PHPSESSID]
 FILEARMY_CATEGORY=[Default category key]
 VERRA_WAIT=[Wait time in seconds]
-VERRA_INCOGNITO=Yes|True|1|Anything truthy
+VERRA_INCOGNITO=Yes|True|1 or a User-Agent string
 ```
 
 The entry ```CATEGORY=[Default category key]``` is deprecated

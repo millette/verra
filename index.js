@@ -107,7 +107,6 @@ const fileFormSetup = formSetup.bind(null, 'file')
 const urlFormSetup = formSetup.bind(null, 'url')
 
 module.exports = class {
-  // constructor (sessionCookie) {
   constructor (options) {
     if (typeof options === 'string') { options = { sessionCookie: options } }
     if (!options) { options = {} }
@@ -121,8 +120,13 @@ module.exports = class {
     this.user = false
     this.categories = []
     this.defaultCategory = false
-    this.agent = options.incognito ? 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0' : this.version
     this.error = false
+
+    if (options.incognito) {
+      this.agent = options.incognito === true ? 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0' : options.incognito
+    } else {
+      this.agent = this.version
+    }
   }
 
   get version () { return `${pkg.name} ${pkg.version} ${pkg.repository.url || ('https://github.com/' + pkg.repository)}` }

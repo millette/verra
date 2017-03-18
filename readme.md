@@ -144,11 +144,13 @@ Create a ```.env``` file with the following content:
 FILEARMY_TOKEN=[Your current PHPSESSID]
 ```
 
-You can also provide a default category if that's your thing:
+You can also provide a default category if that's your thing,
+as well as other settings:
 ```
 FILEARMY_TOKEN=[Your current PHPSESSID]
 FILEARMY_CATEGORY=[Default category key]
 VERRA_WAIT=[Wait time in seconds]
+VERRA_INCOGNITO=Yes|True|1|Anything truthy
 ```
 
 The entry ```CATEGORY=[Default category key]``` is deprecated

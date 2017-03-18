@@ -80,7 +80,7 @@ updateNotifier(cli).notify()
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
-const verra = new Verra({ incognito: cli.flags.incognito })
+const verra = new Verra({ incognito: cli.flags.incognito || process.env.VERRA_INCOGNITO })
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']

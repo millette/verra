@@ -35,6 +35,7 @@ const delay = require('delay')
 const pThrottle = require('p-throttle')
 const metascraper = require('metascraper')
 const got = require('got')
+const cookie = require('cookie')
 const jsome = require('jsome')
 const inquirer = require('inquirer')
 const _ = require('lodash')
@@ -43,6 +44,7 @@ const _ = require('lodash')
 const url = require('url')
 const fs = require('fs')
 const path = require('path')
+const qs = require('querystring')
 
 // self
 const Verra = require('./')
@@ -223,8 +225,22 @@ const imageEditCommand = (x) => {
 
   return imageData(x, cli.input[1])
     .then((y) => {
+      if (y.authorId !== x.user.id) { return yikes('You don\'t own this image. Edit not allowed.') }
       jsome(y)
-      return inquirer.prompt([
+      const cats = [{
+        name: 'None',
+        value: false,
+        short: 'none'
+      }]
+        .concat(x.categories.map((z) => {
+          return {
+            name: z.text,
+            value: z.id,
+            short: z.path
+          }
+        }))
+
+      return Promise.all([y, inquirer.prompt([
         {
           type: 'input',
           name: 'title',
@@ -237,31 +253,68 @@ const imageEditCommand = (x) => {
           default: y.description,
           message: 'Description'
         },
+/*
         {
           type: 'input',
-          name: 'album',
+          name: 'albumId',
           default: y.albumId,
           message: 'Album'
         },
+*/
         {
           type: 'list',
-          name: 'category',
-          choices: x.categories.map((z) => {
-            return {
-              name: z.text,
-              value: z.id,
-              short: z.path
-            }
-          }),
-          default: x.categories.findIndex((x) => y.categoryId === x.path),
+          name: 'categoryId',
+          choices: cats,
+          default: cats.findIndex((x) => y.categoryId === x.short),
           message: 'Category'
         }
-      ])
+      ])])
     })
     .then((y) => {
       console.log('answers', y)
+      const a = {
+        auth_token: x.token,
+        action: 'edit',
+        edit: 'image',
+        'editing[id]': y[0].imageId,
+        'editing[title]': y[1].title,
+        'editing[nsfw]': 0
+        // 'editing[new_album]': true
+        // 'editing[album_privacy]': 'public
+        // 'editing[album_name]'
+        // 'editing[album_description]
+      }
+
+      if (y[1].categoryId !== false) { a['editing[category_id]'] = y[1].categoryId }
+
+      if (y[1].description && y[1].description.trim()) {
+        a['editing[description]'] = y[1].description.trim()
+      }
+
+/*
+      if (y[1].albumId && y[1].albumId.trim()) {
+        a['editing[new_album]'] = false
+        a['editing[album_id]'] = y[1].albumId.trim()
+      }
+*/
+
+      // FIXME Dealing with album IDs and new albums is tricky...
+      // For now, just keep the album_id as is.
+      if (y[0].albumId && y[0].albumId.trim()) {
+        a['editing[new_album]'] = false
+        a['editing[album_id]'] = y[0].albumId.trim()
+      }
+
+      return got(x.root, {
+        json: true,
+        headers: {
+          'user-agent': x.agent,
+          cookie: cookie.serialize('PHPSESSID', x.sessionCookie)
+        },
+        body: a
+      })
     })
-    .then(() => yikes('image-edit not implemented yet.'))
+    .then((res) => _.pick(res, ['body', 'headers', 'statusCode', 'statusMessage']))
 }
 
 const watchCommand = (x) => {

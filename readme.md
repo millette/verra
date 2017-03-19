@@ -68,7 +68,8 @@ $ verra
     * Name and version: version
     * List all categories: categories
     * Init watch directory: init <dir>
-    * Fetch image info: image-json <url>
+    * Fetch image info: image-json <url or id>
+    * Edit image info: image-edit <url or id>
     * Upload new image by URL: url <url>
     * Upload new image by filename: file <filename>
     * Watch a directory for new images to upload: watch <dir>
@@ -81,6 +82,8 @@ $ verra
     * --incognito (user-agent imposter and stuff)
     * --incognito=<user-agent|STRING>
     * --incognito=<false|no|0|STRING> to disable if it's set in the environment
+    * --title=<title|STRING>
+    * --description=<title|STRING>
 ```
 
 ## Watching a directory

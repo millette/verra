@@ -288,6 +288,8 @@ const imageEditCommand = (x) => {
 
       if (y[1].description && y[1].description.trim()) {
         a['editing[description]'] = y[1].description.trim()
+      } else {
+        a['editing[description]'] = ''
       }
 
 /*

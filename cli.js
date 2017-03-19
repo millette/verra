@@ -56,6 +56,7 @@ Available commands:
   * This text: help
   * Name and version: version
   * List all categories: categories
+  * List all albums: albums
   * Init watch directory: init <dir>
   * Fetch image info: image-json <url or id>
   * Edit image info: image-edit <url or id>
@@ -153,6 +154,15 @@ const incognito = (() => {
 })()
 
 const verra = new Verra({ incognito })
+
+const albumsCommand = (x) => {
+  const ar = ['Albums']
+  ar.push(`${x.albums.length} albums:`)
+  x.albums.forEach((y) => {
+    ar.push(`${y.text} at ${y.id ? `https://file.army/a/${y.id}` : x.user.url}`)
+  })
+  return ar.join('\n')
+}
 
 const categoriesCommand = (x) => {
   const ar = ['Categories']
@@ -363,6 +373,7 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie or give 
 
     switch (cli.input[0]) {
       case 'categories': return categoriesCommand(x)
+      case 'albums': return albumsCommand(x)
       case 'url': return urlCommand(x)
       case 'file': return fileCommand(x)
       case 'watch': return watchCommand(x)

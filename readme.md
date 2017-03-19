@@ -67,6 +67,7 @@ $ verra
     * This text: help
     * Name and version: version
     * List all categories: categories
+    * List all albums: albums
     * Init watch directory: init <dir>
     * Fetch image info: image-json <url or id>
     * Edit image info: image-edit <url or id>

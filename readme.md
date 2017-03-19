@@ -83,8 +83,6 @@ $ verra
     * --incognito (user-agent imposter and stuff)
     * --incognito=<user-agent|STRING>
     * --incognito=<false|no|0|STRING> to disable if it's set in the environment
-    * --title=<title|STRING>
-    * --description=<title|STRING>
 ```
 
 ## Watching a directory

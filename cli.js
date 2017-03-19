@@ -99,6 +99,18 @@ const re2 = /id: "(.+)",/
 
 const scraperRules = Object.assign({}, metascraper.RULES, {
   description: ($) => $('.description-text[data-text=image-description]').text(),
+  /*
+  albums: ($) => {
+    const ret = []
+    $('#form-album-id').children().each(function (i, el) {
+      ret.push({
+        text: $(el).text(),
+        id: $(el).val()
+      })
+    })
+    return ret
+  },
+  */
   albumHref: ($) => $('.description-meta a').not('[rel=tag]').attr('href'),
   albumText: ($) => $('.description-meta a').not('[rel=tag]').text(),
   categoryHref: ($) => $('.description-meta a[rel=tag]').attr('href'),
@@ -239,6 +251,13 @@ const imageEditCommand = (x) => {
           }
         }))
 
+      const albums = x.albums.map((z) => {
+        return {
+          name: z.text,
+          value: z.id
+        }
+      })
+
       return Promise.all([y, inquirer.prompt([
         {
           type: 'input',
@@ -252,25 +271,24 @@ const imageEditCommand = (x) => {
           default: y.description,
           message: 'Description'
         },
-/*
+
         {
-          type: 'input',
+          type: 'list',
           name: 'albumId',
-          default: y.albumId,
+          choices: albums,
+          default: albums.findIndex((z) => y.albumId === z.value),
           message: 'Album'
         },
-*/
         {
           type: 'list',
           name: 'categoryId',
           choices: cats,
-          default: cats.findIndex((x) => y.categoryId === x.short),
+          default: cats.findIndex((z) => y.categoryId === z.short),
           message: 'Category'
         }
       ])])
     })
     .then((y) => {
-      console.log('answers', y)
       const a = {
         auth_token: x.token,
         action: 'edit',
@@ -285,26 +303,13 @@ const imageEditCommand = (x) => {
       }
 
       if (y[1].categoryId !== false) { a['editing[category_id]'] = y[1].categoryId }
-
       if (y[1].description && y[1].description.trim()) {
         a['editing[description]'] = y[1].description.trim()
       } else {
         a['editing[description]'] = ''
       }
-
-/*
-      if (y[1].albumId && y[1].albumId.trim()) {
-        a['editing[new_album]'] = false
-        a['editing[album_id]'] = y[1].albumId.trim()
-      }
-*/
-
-      // FIXME Dealing with album IDs and new albums is tricky...
-      // For now, just keep the album_id as is.
-      if (y[0].albumId && y[0].albumId.trim()) {
-        a['editing[new_album]'] = false
-        a['editing[album_id]'] = y[0].albumId.trim()
-      }
+      a['editing[new_album]'] = false
+      a['editing[album_id]'] = y[1].albumId.trim()
 
       return got(x.root, {
         json: true,

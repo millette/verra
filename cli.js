@@ -34,6 +34,9 @@ const pify = require('pify')
 const delay = require('delay')
 const pThrottle = require('p-throttle')
 const metascraper = require('metascraper')
+const got = require('got')
+const jsome = require('jsome')
+const inquirer = require('inquirer')
 const _ = require('lodash')
 
 // core
@@ -53,7 +56,8 @@ Available commands:
   * Name and version: version
   * List all categories: categories
   * Init watch directory: init <dir>
-  * Fetch image info: image-json <url>
+  * Fetch image info: image-json <url or id>
+  * Edit image info: image-edit <url or id>
   * Upload new image by URL: url <url>
   * Upload new image by filename: file <filename>
   * Watch a directory for new images to upload: watch <dir>
@@ -66,6 +70,8 @@ Possible flags:
   * --incognito (hide user-agent and stuff)
   * --incognito=<user-agent|STRING>
   * --incognito=<false|no|0|STRING> to disable if it's set in the environment
+  * --title=<title|STRING>
+  * --description=<title|STRING>
 `
   },
   {
@@ -86,6 +92,7 @@ updateNotifier(cli).notify()
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
 
+const yikes = (str) => Promise.reject(new Error(str))
 const re1 = /CHV\.obj\.resource\.user = (\{[^]+\});/
 const re2 = /id: "(.+)",/
 
@@ -113,7 +120,8 @@ const scraperRules = Object.assign({}, metascraper.RULES, {
   date: ($) => $('.description-meta span').attr('title')
 })
 
-const imageData = (html) => metascraper[url.parse(html).protocol ? 'scrapeUrl' : 'scrapeHtml'](html, scraperRules)
+const imageData = (x, u) => got(u, { headers: { 'user-agent': x.agent } })
+  .then((res) => metascraper.scrapeHtml(res.body, scraperRules))
   .then((x) => _.omitBy(x, (y) => _.isNull(y)))
 
 const incognito = (() => {
@@ -143,17 +151,17 @@ const categoriesCommand = (x) => {
 }
 
 const initCommand = (x) => {
-  if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
+  if (!cli.input[1]) { return yikes('Missing directory argument.') }
   if (!fs.existsSync(cli.input[1])) {
-    return Promise.reject(new Error(`Directory ${cli.input[1]} doesn't exist.`))
+    return yikes(`Directory ${cli.input[1]} doesn't exist.`)
   }
 
   if (cli.flags.type !== 'categories' && cli.flags.type !== 'albums') {
-    return Promise.reject(new Error(`Flag --type should be either "categories" or "albums".`))
+    return yikes('Flag --type should be either "categories" or "albums".')
   }
 
   if (cli.flags.type === 'albums') {
-    return Promise.reject(new Error(`Flag --type=albums isn't supported yet.`))
+    return yikes('Flag --type=albums isn\'t supported yet.')
   }
 
   return Promise.all(x.categories.map((y) => mkdirp(path.resolve(cli.input[1], y.path))))
@@ -161,18 +169,18 @@ const initCommand = (x) => {
 }
 
 const fileCommand = (x) => {
-  if (!cli.input[1]) { return Promise.reject(new Error(`Missing file argument.`)) }
+  if (!cli.input[1]) { return yikes('Missing file argument.') }
   if (!fs.existsSync(cli.input[1])) {
-    return Promise.reject(new Error(`File ${cli.input[1]} doesn't exist.`))
+    return yikes(`File ${cli.input[1]} doesn't exist.`)
   }
   return x.byFile(cli.input[1])
 }
 
 const urlCommand = (x) => {
-  if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`)) }
+  if (!cli.input[1]) { return yikes('Missing url argument.') }
   const u = url.parse(cli.input[1])
   if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
-    return Promise.reject(new Error(`${cli.input[1]} doesn't look like a url.`))
+    return yikes(`${cli.input[1]} doesn't look like a url.`)
   }
   return x.byUrl(cli.input[1])
 }
@@ -196,29 +204,80 @@ const processImp = (x, p) => delay(Math.random() * cli.flags.wait / 2 * 1000)
 
 const processing = pThrottle(processImp, 1, cli.flags.wait * 1000)
 
-const imageJsonCommand = () => {
-  if (!cli.input[1]) { return Promise.reject(new Error(`Missing url argument.`)) }
+const imageJsonCommand = (x) => {
+  if (!cli.input[1]) { return yikes('Missing url argument.') }
   const u = url.parse(cli.input[1])
   if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
     cli.input[1] = ['https://file.army/i', cli.input[1]].join('/')
   }
-  return imageData(cli.input[1])
+  return imageData(x, cli.input[1])
+    .then((y) => jsome.getColoredString(y))
+}
+
+const imageEditCommand = (x) => {
+  if (!cli.input[1]) { return yikes('Missing url argument.') }
+  const u = url.parse(cli.input[1])
+  if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
+    cli.input[1] = ['https://file.army/i', cli.input[1]].join('/')
+  }
+
+  return imageData(x, cli.input[1])
+    .then((y) => {
+      jsome(y)
+      return inquirer.prompt([
+        {
+          type: 'input',
+          name: 'title',
+          default: y.title,
+          message: 'Title'
+        },
+        {
+          type: 'input',
+          name: 'description',
+          default: y.description,
+          message: 'Description'
+        },
+        {
+          type: 'input',
+          name: 'album',
+          default: y.albumId,
+          message: 'Album'
+        },
+        {
+          type: 'list',
+          name: 'category',
+          choices: x.categories.map((z) => {
+            return {
+              name: z.text,
+              value: z.id,
+              short: z.path
+            }
+          }),
+          default: x.categories.findIndex((x) => y.categoryId === x.path),
+          message: 'Category'
+        }
+      ])
+    })
+    .then((y) => {
+      console.log('answers', y)
+    })
+    .then(() => yikes('image-edit not implemented yet.'))
 }
 
 const watchCommand = (x) => {
-  if (!cli.input[1]) { return Promise.reject(new Error(`Missing directory argument.`)) }
+  if (!cli.input[1]) { return yikes('Missing directory argument.') }
   const dir = path.resolve(cli.input[1])
   if (!fs.existsSync(dir)) {
-    return Promise.reject(new Error(`Directory ${dir} doesn't exist.`))
+    return yikes(`Directory ${dir} doesn't exist.`)
   }
   x.watchDir = dir
   x.doneDir = path.resolve(x.watchDir, '.done')
   if (!fs.existsSync(x.doneDir)) { mkdirp.sync(x.doneDir) }
   if (cli.flags.type && cli.flags.type !== 'categories' && cli.flags.type !== 'albums') {
-    return Promise.reject(new Error(`Flag --type should be either "categories" or "albums".`))
+    return yikes('Flag --type should be either "categories" or "albums".')
   }
   if (cli.flags.type === 'albums') {
-    return Promise.reject(new Error(`Flag --type=albums isn't supported yet.`))
+    return yikes('Flag --type=albums isn\'t supported yet.')
   }
   if (cli.flags.type === 'categories') { x.watchType = cli.flags.type }
 
@@ -248,7 +307,8 @@ Update .env file; set FILEARMY_TOKEN to your connected PHPSESSID cookie or give 
       case 'url': return urlCommand(x)
       case 'file': return fileCommand(x)
       case 'watch': return watchCommand(x)
-      case 'image-json': return imageJsonCommand()
+      case 'image-json': return imageJsonCommand(x)
+      case 'image-edit': return imageEditCommand(x)
       case 'init': return initCommand(x)
       case 'version': return x.version
       default: cli.showHelp()

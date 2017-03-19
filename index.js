@@ -40,6 +40,8 @@ if (process.env.CATEGORY) {
   process.env.FILEARMY_CATEGORY = process.env.CATEGORY
 }
 
+const yikes = (str) => Promise.reject(new Error(str))
+
 const re1 = /PF\.obj\.config\.auth_token(.+);/
 const re2 = /PF\.obj\.config\.json_api(.+);/
 const re3 = /\bmax_filesize(.+),/
@@ -216,11 +218,11 @@ module.exports = class {
   }
 
   byUrl (options) {
-    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
+    if (!this.connected) { return yikes('Not connected.') }
     const to = typeof options
-    if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
+    if (to !== 'string' && to !== 'object') { return yikes('Argument should be a string or an object.') }
     if (to === 'string') { options = { url: options } }
-    if (!options.url) { return Promise.reject(new Error('Missing url.')) }
+    if (!options.url) { return yikes('Missing url.') }
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageUrl(options)
@@ -228,11 +230,11 @@ module.exports = class {
   }
 
   byFile (options) {
-    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
+    if (!this.connected) { return yikes('Not connected.') }
     const to = typeof options
-    if (to !== 'string' && to !== 'object') { return Promise.reject(new Error('Argument should be a string or an object.')) }
+    if (to !== 'string' && to !== 'object') { return yikes('Argument should be a string or an object.') }
     if (to === 'string') { options = { source: options } }
-    if (!options.source) { return Promise.reject(new Error('Missing source file name.')) }
+    if (!options.source) { return yikes('Missing source file name.') }
     options.category = options.category ? this.validCategory(options.category) : this.defaultCategory
     if (options.sessionCookie) { this.sessionCookie = options.sessionCookie }
     this.newImageFile(options)
@@ -240,7 +242,7 @@ module.exports = class {
   }
 
   edit (options) {
-    if (!this.connected) { return Promise.reject(new Error('Not connected.')) }
-    return Promise.reject(new Error('Not implemented yet.'))
+    if (!this.connected) { return yikes('Not connected.') }
+    return yikes('Not implemented yet.')
   }
 }

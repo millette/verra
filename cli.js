@@ -99,7 +99,10 @@ const scraperRules = Object.assign({}, metascraper.RULES, {
   authorLink: ($) => $('.user-link[rel=author]').attr('href'),
   authorId: ($) => $('script').eq(17).text().match(re1)[1].match(re2)[1],
   imageId: ($) => $('#modal-share-url').attr('value').split('/').slice(-1)[0],
-  albumId: ($) => $('.description-meta a').not('[rel=tag]').attr('href').split('/').slice(-1)[0],
+  albumId: ($) => {
+    const ret = $('.description-meta a').not('[rel=tag]').attr('href')
+    if (ret) { return ret.split('/').slice(-1)[0] }
+  },
   categoryId: ($) => $('.description-meta a[rel=tag]').attr('href').split('/').slice(-1)[0],
   date: ($) => $('.description-meta span').attr('title')
 })

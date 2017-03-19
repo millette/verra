@@ -90,6 +90,7 @@ const re1 = /CHV\.obj\.resource\.user = (\{[^]+\});/
 const re2 = /id: "(.+)",/
 
 const scraperRules = Object.assign({}, metascraper.RULES, {
+  description: ($) => $('.description-text[data-text=image-description]').text(),
   albumHref: ($) => $('.description-meta a').not('[rel=tag]').attr('href'),
   albumText: ($) => $('.description-meta a').not('[rel=tag]').text(),
   categoryHref: ($) => $('.description-meta a[rel=tag]').attr('href'),

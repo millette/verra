@@ -34,6 +34,7 @@ const pify = require('pify')
 const delay = require('delay')
 const pThrottle = require('p-throttle')
 const metascraper = require('metascraper')
+const _ = require('lodash')
 
 // core
 const url = require('url')
@@ -87,6 +88,7 @@ const mkdir = pify(mkdirp)
 
 const re1 = /CHV\.obj\.resource\.user = (\{[^]+\});/
 const re2 = /id: "(.+)",/
+
 const scraperRules = Object.assign({}, metascraper.RULES, {
   albumHref: ($) => $('.description-meta a').not('[rel=tag]').attr('href'),
   albumText: ($) => $('.description-meta a').not('[rel=tag]').text(),
@@ -111,6 +113,7 @@ const scraperRules = Object.assign({}, metascraper.RULES, {
 })
 
 const imageData = (html) => metascraper[url.parse(html).protocol ? 'scrapeUrl' : 'scrapeHtml'](html, scraperRules)
+  .then((x) => _.omitBy(x, (y) => _.isNull(y)))
 
 const incognito = (() => {
   let incognitoA = false

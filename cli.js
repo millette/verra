@@ -103,7 +103,10 @@ const scraperRules = Object.assign({}, metascraper.RULES, {
     const ret = $('.description-meta a').not('[rel=tag]').attr('href')
     if (ret) { return ret.split('/').slice(-1)[0] }
   },
-  categoryId: ($) => $('.description-meta a[rel=tag]').attr('href').split('/').slice(-1)[0],
+  categoryId: ($) => {
+    const ret = $('.description-meta a[rel=tag]').attr('href')
+    if (ret) { return ret.split('/').slice(-1)[0] }
+  },
   date: ($) => $('.description-meta span').attr('title')
 })
 

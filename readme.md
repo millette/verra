@@ -157,6 +157,7 @@ FILEARMY_TOKEN=[Your current PHPSESSID]
 FILEARMY_CATEGORY=[Default category key]
 VERRA_WAIT=[Wait time in seconds]
 VERRA_INCOGNITO=Yes|True|1 or a User-Agent string
+VERRA_WATCH=[Default watch directory]
 ```
 
 The entry ```CATEGORY=[Default category key]``` is deprecated

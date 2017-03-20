@@ -332,6 +332,7 @@ const imageEditCommand = (x) => {
 }
 
 const watchCommand = (x) => {
+  if (!cli.input[1]) { cli.input[1] = process.env.VERRA_WATCH }
   if (!cli.input[1]) { return yikes('Missing directory argument.') }
   const dir = path.resolve(cli.input[1])
   if (!fs.existsSync(dir)) {

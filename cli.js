@@ -87,7 +87,7 @@ Possible flags:
   }
 )
 
-updateNotifier(cli).notify()
+updateNotifier({ pkg: cli.pkg }).notify()
 
 const rename = pify(fs.rename)
 const mkdir = pify(mkdirp)
@@ -172,6 +172,7 @@ const categoriesCommand = (x) => {
 }
 
 const initCommand = (x) => {
+  if (!cli.input[1]) { cli.input[1] = process.env.VERRA_WATCH }
   if (!cli.input[1]) { return yikes('Missing directory argument.') }
   if (!fs.existsSync(cli.input[1])) {
     return yikes(`Directory ${cli.input[1]} doesn't exist.`)

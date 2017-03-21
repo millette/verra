@@ -21,7 +21,10 @@
   "files": [
     ".env.required",
     "index.js",
-    "cli.js"
+    "cli.js",
+    "les-cats.txt",
+    "yo.js",
+    "lib/flickr.js"
   ],
   "keywords": [
     "cli-app",

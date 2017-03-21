@@ -83,7 +83,6 @@ const getCats = (str) => {
 
 const getAlbums = (body) => {
   const reAA = /<select name="form-album-id".+>([^]+?)<\/select>/
-
   const re2AA = /value="(.*)".*>(.+)</
 
   let albumOptions = body.match(reAA)[1]
@@ -128,18 +127,21 @@ const parse = (res) => {
   return ret
 }
 
-const formSetup = (type, category, token, source) => {
+const formSetup = (type, options, token) => {
+  console.log('formSetup', options, type)
   const body = new FormData()
   body.append('action', 'upload')
   body.append('privacy', 'public')
   body.append('timestamp', Date.now())
   body.append('auth_token', token)
   body.append('nsfw', '0')
-  if (category) { body.append('category_id', String(category)) }
+  if (options.category) { body.append('category_id', String(options.category)) }
+  if (options.description) { body.append('description', options.description) }
+  if (options.title) { body.append('title', options.title) }
   body.append('type', type)
-  if (type === 'url') { body.append('source', source) }
-  if (type === 'file') { body.append('source', fs.createReadStream(source)) }
-  return body
+  if (type === 'url') { body.append('source', options.url) }
+  if (type === 'file') { body.append('source', fs.createReadStream(options.source)) }
+  options.body = body
 }
 
 const fileFormSetup = formSetup.bind(null, 'file')
@@ -180,16 +182,21 @@ module.exports = class {
   }
 
   newImageUrl (options) {
-    options.body = urlFormSetup(options.category, this.token, options.url)
-    return options
+    urlFormSetup(options, this.token)
+    // options.body = urlFormSetup(options.category, this.token, options.url)
+    // options.body = urlFormSetup(options, this.token)
+    // return options
   }
 
   newImageFile (options) {
-    if (this.watchType === 'categories') {
+    if (!options.category && this.watchType === 'categories') {
       options.category = this.validCategory(path.dirname(options.source).split('/').slice(-1)[0])
     }
-    options.body = fileFormSetup(options.category, this.token, options.source)
-    return options
+    fileFormSetup(options, this.token)
+    // options.body = fileFormSetup(options, this.token)
+    // options.body = fileFormSetup(options.category, this.token, options.source)
+    // urlFormSetup(options, this.token)
+    // return options
   }
 
   doit (options) {

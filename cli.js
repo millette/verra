@@ -195,7 +195,15 @@ const fileCommand = (x) => {
   if (!fs.existsSync(cli.input[1])) {
     return yikes(`File ${cli.input[1]} doesn't exist.`)
   }
-  return x.byFile(cli.input[1])
+  const obj = {
+    source: cli.input[1]
+  }
+
+  if (cli.flags.category) { obj.category = x.validCategory(cli.flags.category) }
+  if (cli.flags.title) { obj.title = cli.flags.title }
+  if (cli.flags.description) { obj.description = cli.flags.description }
+
+  return x.byFile(obj)
 }
 
 const urlCommand = (x) => {
@@ -204,7 +212,15 @@ const urlCommand = (x) => {
   if (!u || (u.protocol !== 'http:' && u.protocol !== 'https:')) {
     return yikes(`${cli.input[1]} doesn't look like a url.`)
   }
-  return x.byUrl(cli.input[1])
+  const obj = {
+    url: cli.input[1]
+  }
+
+  if (cli.flags.category) { obj.category = x.validCategory(cli.flags.category) }
+  if (cli.flags.title) { obj.title = cli.flags.title }
+  if (cli.flags.description) { obj.description = cli.flags.description }
+
+  return x.byUrl(obj)
 }
 
 const moveFile = (x, p) => {

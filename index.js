@@ -55,15 +55,11 @@ const chop = (ar) => chop1(chop0(ar))
 const chop2 = (ar) => chop1(chop5(':', ar))
 const chop9 = (ar) => chop2(ar).split(',').map((x) => x.trim().slice(1, -1))
 const getUser = (str) => {
-  // console.log('GET_USER')
   try {
     const a = str.match(re4)
-    // console.log('GET_USER-A', a)
     const b = a ? JSON.parse(chop0(a)) : false
-    // console.log('GET_USER-B', b)
     return b
   } catch (e) {
-    // console.log('COUGHT')
     return false
   }
 }
@@ -86,15 +82,10 @@ const getAlbums = (body) => {
   const re2AA = /value="(.*)".*>(.+)</
 
   let albumOptions = body.match(reAA)[1]
-  // console.log('YAYA-1', albumOptions)
   albumOptions = albumOptions.split('\n')
-  // console.log('YAYA-2', albumOptions)
   albumOptions = albumOptions.map((x) => x.trim())
-  // console.log('YAYA-3', albumOptions)
   albumOptions = albumOptions.slice(1, -1)
-  // console.log('YAYA-4', albumOptions)
   albumOptions = albumOptions.map((x) => x.match(re2AA).slice(1))
-  // console.log('MATCHES', albumOptions)
   return albumOptions.map((x) => {
     return {
       text: x[1],
@@ -104,31 +95,20 @@ const getAlbums = (body) => {
 }
 
 const parse = (res) => {
-  // console.log('HHH', res.headers)
-  // console.log('BBB', res.body)
   const body = res.body
   const headers = res.headers
   const user = getUser(body)
-  // console.log('STEP:user')
   const albums = getAlbums(body)
-  // console.log('STEP:albums')
   const token = chop(body.match(re1))
-  // console.log('STEP:token')
   const root = chop(body.match(re2))
-  // console.log('STEP:root')
   const maxFilesize = chop2(body.match(re3))
-  // console.log('STEP:max')
   const imageTypes = chop9(body.match(re5))
-  // console.log('STEP:imgtypes')
   const categories = getCats(body)
-  // console.log('STEP:cats')
   const ret = { headers, albums, token, root, maxFilesize, imageTypes, user, categories }
-  // console.log('RET-RET', ret)
   return ret
 }
 
 const formSetup = (type, options, token) => {
-  console.log('formSetup', options, type)
   const body = new FormData()
   body.append('action', 'upload')
   body.append('privacy', 'public')

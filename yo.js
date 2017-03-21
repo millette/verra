@@ -84,9 +84,7 @@ const command = (ver, tim) => {
 
     flickr.fetchBatch()
       .then((photos) => {
-        // console.log('photos[0]', photos[0])
         photos = _.shuffle(photos)
-        // const todo = photos.map((z) => z.id)
         const imp = () => {
           const i = photos.pop()
           if (!i) {
@@ -97,7 +95,6 @@ const command = (ver, tim) => {
               return
             }
           }
-          console.log('i', JSON.stringify(i, null, '  '))
           hi(i)
           setTimeout(imp, delay + (Math.random() * (3 * delay)))
         }

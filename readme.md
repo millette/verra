@@ -76,6 +76,8 @@ $ verra
     * Watch a directory for new images to upload: watch <dir>
 
   Possible flags:
+    * --title=<title|STRING>
+    * --description=<title|STRING>
     * --category=<category|INTEGER|STRING>
     * --category (disables default category found in .env)
     * --wait=<seconds|INTEGER> (waits between seconds and 1.5 * seconds)

@@ -7,6 +7,7 @@ const fs = require('fs')
 
 // npm
 const _ = require('lodash')
+const he = require('he')
 
 // self
 const flickr = require('./lib/flickr')
@@ -61,6 +62,7 @@ const command = (ver, tim) => {
           } else {
             obj.description = `By ${obj.owner}${obj.location ? (' in ' + obj.location) : ''} via ${obj.url}.`
           }
+          obj.description = he.decode(obj.description)
 
           const fm = firstMatch(obj.tags)
           if (fm) { obj.category = fm }
@@ -70,8 +72,6 @@ const command = (ver, tim) => {
           allDones.push(x.id)
           fs.writeFileSync('magic-log.json', JSON.stringify(allDones))
 
-          // upload!
-          // title, description, url, category
           const opts = {
             url: obj.jpg,
             title: obj.title,

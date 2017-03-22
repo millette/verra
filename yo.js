@@ -58,9 +58,9 @@ const command = (ver, tim) => {
             jpg: `https://c1.staticflickr.com/${x.farm}/${x.server}/${x.id}_${x.secret}_b.jpg`
           }
           if (obj.description) {
-            obj.description += `\nBy ${obj.owner}${obj.location ? (' in ' + obj.location) : ''} via ${obj.url}.`
+            obj.description += `\nBy ${obj.owner}${obj.location ? (' in ' + obj.location) : ''} via ${obj.url}`
           } else {
-            obj.description = `By ${obj.owner}${obj.location ? (' in ' + obj.location) : ''} via ${obj.url}.`
+            obj.description = `By ${obj.owner}${obj.location ? (' in ' + obj.location) : ''} via ${obj.url}`
           }
           obj.description = he.decode(obj.description)
 

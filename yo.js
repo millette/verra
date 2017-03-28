@@ -4,10 +4,14 @@ require('dotenv-safe').load({ sample: [__dirname, '.env.required'].join('/') })
 
 // core
 const fs = require('fs')
+const path = require('path')
+const url = require('url')
 
 // npm
+const got = require('got')
 const _ = require('lodash')
 const he = require('he')
+const cookie = require('cookie')
 
 // self
 const flickr = require('./lib/flickr')
@@ -107,6 +111,43 @@ const command = (ver, tim) => {
 
 const verra = new Verra()
 
+const getRandomImage = () => got.head('https://file.army/?random').then((x) => path.basename(x.url))
+
+const licheuxImp = (ver) => getRandomImage()
+  .then((id) => {
+    // console.log('ahum', id, ver.token, ver.sessionCookie)
+    const u = url.parse('https://file.army/json')
+    u.query = {
+      auth_token: ver.token,
+      action: 'like',
+      'like[object]': 'image',
+      'like[id]': id,
+      '_': Date.now()
+    }
+
+    return got(u, {
+      headers: {
+        accept: 'application/json',
+        cookie: cookie.serialize('PHPSESSID', ver.sessionCookie),
+        'user-agent': ver.agent
+      }
+    })
+  })
+  .then((res) => {
+    return {
+      // headers: res.headers,
+      body: res.body
+    }
+  })
+  .then(console.log)
+  .catch(console.error)
+
+const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 7, ver)
+// const licheux = (ver) => setInterval(licheuxImp, 1000 * 17, ver)
+
 verra.init()
-  .then((x) => command(x, process.env.VERRA_WAIT ? (process.env.VERRA_WAIT * 1000) : 600000))
+  .then((x) => {
+    licheux(x)
+    return command(x, process.env.VERRA_WAIT ? (process.env.VERRA_WAIT * 1000) : 600000)
+  })
   .catch(console.error)

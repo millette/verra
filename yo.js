@@ -8,6 +8,7 @@ const path = require('path')
 const url = require('url')
 
 // npm
+const delay = require('delay')
 const got = require('got')
 const _ = require('lodash')
 const he = require('he')
@@ -111,7 +112,9 @@ const command = (ver, tim) => {
 
 const verra = new Verra()
 
-const getRandomImage = () => got.head('https://file.army/?random').then((x) => path.basename(x.url))
+const getRandomImage = () => delay(Math.random(1000 * 5) + 1000)
+  .then(() => got.head('https://file.army/?random'))
+  .then((x) => path.basename(x.url))
 
 const licheuxImp = (ver) => getRandomImage()
   .then((id) => {
@@ -143,7 +146,6 @@ const licheuxImp = (ver) => getRandomImage()
   .catch(console.error)
 
 const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 7, ver)
-// const licheux = (ver) => setInterval(licheuxImp, 1000 * 17, ver)
 
 verra.init()
   .then((x) => {

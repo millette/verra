@@ -112,14 +112,13 @@ const command = (ver, tim) => {
 
 const verra = new Verra()
 
-const getRandomImage = () => delay(Math.random(1000 * 5) + 1000)
+const getRandomImage = () => delay(60 * 1000 * Math.random(10) + 1)
   .then(() => got.head('https://file.army/?random'))
   .then((x) => path.basename(x.url))
 
 const licheuxImp = (ver) => getRandomImage()
   .then((id) => {
-    // console.log('ahum', id, ver.token, ver.sessionCookie)
-    const u = url.parse('https://file.army/json')
+    const u = url.parse(ver.root)
     u.query = {
       auth_token: ver.token,
       action: 'like',
@@ -129,23 +128,25 @@ const licheuxImp = (ver) => getRandomImage()
     }
 
     return got(u, {
+      json: true,
       headers: {
-        accept: 'application/json',
         cookie: cookie.serialize('PHPSESSID', ver.sessionCookie),
         'user-agent': ver.agent
       }
     })
   })
   .then((res) => {
+    if (!res.body.content && res.body.content.likes) { return res.body }
     return {
-      // headers: res.headers,
-      body: res.body
+      when: new Date().toISOString(),
+      likes: res.body.content.likes,
+      id: res.body.content.id_encoded
     }
   })
   .then(console.log)
   .catch(console.error)
 
-const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 7, ver)
+const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 13, ver)
 
 verra.init()
   .then((x) => {

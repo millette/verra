@@ -112,7 +112,7 @@ const command = (ver, tim) => {
 
 const verra = new Verra()
 
-const getRandomImage = () => delay(60 * 1000 * Math.random(10) + 1)
+const getRandomImage = () => delay(60 * 1000 * Math.random(20) + 1)
   .then(() => got.head('https://file.army/?random'))
   .then((x) => path.basename(x.url))
 
@@ -146,7 +146,7 @@ const licheuxImp = (ver) => getRandomImage()
   .then(console.log)
   .catch(console.error)
 
-const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 13, ver)
+const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 25, ver)
 
 verra.init()
   .then((x) => {

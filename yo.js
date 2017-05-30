@@ -8,7 +8,7 @@ const path = require('path')
 const url = require('url')
 
 // npm
-const delay = require('delay')
+const delayP = require('delay')
 const got = require('got')
 const _ = require('lodash')
 const he = require('he')
@@ -44,7 +44,7 @@ const command = (ver, tim) => {
       }
       ++did
 
-      flickr.imageInfo(gg.id)
+      return flickr.imageInfo(gg.id)
         .then((x) => x.photo)
         .then((x) => {
           const obj = {
@@ -85,6 +85,8 @@ const command = (ver, tim) => {
           }
           ver.byUrl(opts)
         })
+        // .then(console.log)
+        .catch(console.error)
     }
 
     flickr.fetchBatch()
@@ -105,6 +107,7 @@ const command = (ver, tim) => {
         }
         imp()
       })
+      .catch(console.error)
   }
 
   loop(tim)
@@ -112,41 +115,54 @@ const command = (ver, tim) => {
 
 const verra = new Verra()
 
-const getRandomImage = () => delay(60 * 1000 * Math.random(20) + 1)
-  .then(() => got.head('https://file.army/?random'))
+const getRandomImage = () => got.head('https://file.army/?random')
   .then((x) => path.basename(x.url))
 
-const licheuxImp = (ver) => getRandomImage()
-  .then((id) => {
-    const u = url.parse(ver.root)
-    u.query = {
-      auth_token: ver.token,
-      action: 'like',
-      'like[object]': 'image',
-      'like[id]': id,
-      '_': Date.now()
+const saveMoneyPage = (ver) => {
+  got.stream('https://file.army/settings/money?userBalanceBitcoin=10', {
+    headers: {
+      cookie: cookie.serialize('PHPSESSID', ver.sessionCookie),
+      'user-agent': ver.agent
     }
+  })
+    .pipe(fs.createWriteStream(`moneys/at-${Date.now()}.html`))
+}
 
-    return got(u, {
-      json: true,
-      headers: {
-        cookie: cookie.serialize('PHPSESSID', ver.sessionCookie),
-        'user-agent': ver.agent
+const licheux = (ver) => {
+  getRandomImage()
+    .then((id) => {
+      const u = url.parse(ver.root)
+      u.query = {
+        auth_token: ver.token,
+        action: 'like',
+        'like[object]': 'image',
+        'like[id]': id
+      }
+
+      saveMoneyPage(ver)
+      return got(u, {
+        json: true,
+        headers: {
+          cookie: cookie.serialize('PHPSESSID', ver.sessionCookie),
+          'user-agent': ver.agent
+        }
+      })
+    })
+    .then((res) => {
+      if (!res.body.content && res.body.content.likes) { return res.body }
+      return {
+        when: new Date().toISOString(),
+        likes: res.body.content.likes,
+        id: res.body.content.id_encoded
       }
     })
-  })
-  .then((res) => {
-    if (!res.body.content && res.body.content.likes) { return res.body }
-    return {
-      when: new Date().toISOString(),
-      likes: res.body.content.likes,
-      id: res.body.content.id_encoded
-    }
-  })
-  .then(console.log)
-  .catch(console.error)
+    .then(console.log)
+    .catch(console.error)
 
-const licheux = (ver) => setInterval(licheuxImp, 1000 * 60 * 25, ver)
+  const wait = 1000 * Math.round((600 * Math.random()) + 45)
+  console.log('waiting', Math.round(wait / 6000) / 10)
+  setTimeout(licheux, wait, ver)
+}
 
 verra.init()
   .then((x) => {
